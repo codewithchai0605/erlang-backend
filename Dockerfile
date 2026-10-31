@@ -14,7 +14,8 @@ COPY proto/ proto/
 
 WORKDIR /workspace/backend
 
-RUN rebar3 as prod release
+RUN mkdir -p include src/gen \
+    && rebar3 as prod release
 
 FROM erlang:29-slim AS runtime
 
