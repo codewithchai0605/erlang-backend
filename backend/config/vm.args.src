@@ -1,0 +1,4 @@
+-sname chat
+-setcookie ${CHAT_NODE_COOKIE}
+# Keep distributed Erlang on loopback only. Never expose the distribution port publicly.
+-kernel inet_dist_use_interface {127,0,0,1}

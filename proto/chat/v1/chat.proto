@@ -1,0 +1,170 @@
+// Chat protocol v1. Source of truth for Erlang (gpb) and Dart (protoc-gen-dart).
+// Rules: never reuse a field number; when removing a field, `reserved` its number and name.
+// Not yet compiled with protoc in the authoring sandbox (none installed) - see docs/protocol.md.
+syntax = "proto3";
+
+package chat.v1;
+
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  ERROR_CODE_UNSUPPORTED_VERSION = 1;
+  ERROR_CODE_UNAUTHENTICATED = 2;
+  ERROR_CODE_INVALID_ARGUMENT = 3;
+  ERROR_CODE_PERMISSION_DENIED = 4;
+  ERROR_CODE_NOT_FOUND = 5;
+  ERROR_CODE_RATE_LIMITED = 6;
+  ERROR_CODE_UNSUPPORTED_EVENT = 7;
+  ERROR_CODE_INTERNAL = 8;
+  ERROR_CODE_MESSAGE_TOO_LARGE = 9;
+}
+
+enum ConversationKind {
+  CONVERSATION_KIND_UNSPECIFIED = 0;
+  CONVERSATION_KIND_DIRECT = 1;
+  CONVERSATION_KIND_GROUP = 2;
+}
+
+// ---------------------------------------------------------------- client -> server
+
+message ClientEnvelope {
+  string request_id = 1;            // echoed in the response; client-chosen, unique per connection
+  oneof body {
+    Hello hello = 9;                // must be the first message on a connection
+    SendMessage send_message = 10;
+    TypingEvent typing = 11;        // reserved for Milestone 5; server answers UNSUPPORTED_EVENT until then
+    MarkRead mark_read = 12;
+    SyncRequest sync_request = 13;  // forward sync: messages after a sequence number
+    DeliveryAck ack_delivered = 14;
+    CreateDirectConversation create_direct = 15;
+    ListConversations list_conversations = 16;
+    HistoryRequest history_request = 17; // backward pagination: messages before a sequence number
+  }
+}
+
+message Hello {
+  uint32 protocol_version = 1;
+  repeated string capabilities = 2;
+  string access_token = 3;          // never log
+}
+
+message SendMessage {
+  string conversation_id = 1;
+  string client_message_id = 2;     // idempotency key, unique per sender
+  string text = 3;
+}
+
+message TypingEvent {
+  string conversation_id = 1;
+  bool is_typing = 2;
+}
+
+message MarkRead {
+  string conversation_id = 1;
+  int64 read_up_to_seq = 2;
+}
+
+message DeliveryAck {
+  string conversation_id = 1;
+  int64 delivered_up_to_seq = 2;
+}
+
+message SyncRequest {
+  string conversation_id = 1;
+  int64 after_seq = 2;
+  uint32 limit = 3;                 // 0 = server default; capped by the server
+}
+
+message HistoryRequest {
+  string conversation_id = 1;
+  int64 before_seq = 2;             // 0 = start from the newest message
+  uint32 limit = 3;
+}
+
+message CreateDirectConversation {
+  string peer_user_id = 1;
+}
+
+message ListConversations {}
+
+// ---------------------------------------------------------------- server -> client
+
+message ServerEnvelope {
+  string request_id = 1;            // empty for server-initiated pushes
+  oneof body {
+    HelloAck hello_ack = 9;
+    MessageAccepted accepted = 10;
+    ChatMessage new_message = 11;
+    ProtocolError error = 12;
+    ConversationList conversation_list = 13;
+    ConversationInfo conversation = 14;
+    MessageBatch batch = 15;
+    ReceiptUpdate receipt = 16;
+  }
+}
+
+message HelloAck {
+  uint32 protocol_version = 1;
+  repeated string capabilities = 2;
+  string user_id = 3;
+  int64 server_time_unix_ms = 4;
+  uint32 max_message_bytes = 5;
+  uint32 max_text_chars = 6;
+}
+
+message MessageAccepted {
+  string message_id = 1;
+  string client_message_id = 2;
+  int64 seq = 3;
+  int64 created_at_unix_ms = 4;
+  bool duplicate = 5;               // true when this client_message_id was already stored
+  string conversation_id = 6;
+}
+
+message ChatMessage {
+  string message_id = 1;
+  string conversation_id = 2;
+  string sender_id = 3;
+  string client_message_id = 4;
+  string text = 5;
+  int64 created_at_unix_ms = 6;
+  int64 seq = 7;                    // per-conversation, strictly increasing, no gaps
+}
+
+message MessageBatch {
+  string conversation_id = 1;
+  repeated ChatMessage messages = 2;  // ascending by seq
+  bool has_more = 3;
+}
+
+message Member {
+  string user_id = 1;
+  string username = 2;
+  string display_name = 3;
+  int64 delivered_up_to_seq = 4;
+  int64 read_up_to_seq = 5;
+}
+
+message ConversationInfo {
+  string conversation_id = 1;
+  ConversationKind kind = 2;
+  string title = 3;
+  repeated Member members = 4;
+  int64 last_seq = 5;
+  int64 last_activity_unix_ms = 6;
+}
+
+message ConversationList {
+  repeated ConversationInfo conversations = 1;
+}
+
+message ReceiptUpdate {
+  string conversation_id = 1;
+  string user_id = 2;
+  int64 delivered_up_to_seq = 3;
+  int64 read_up_to_seq = 4;
+}
+
+message ProtocolError {
+  ErrorCode code = 1;
+  string message = 2;
+}
