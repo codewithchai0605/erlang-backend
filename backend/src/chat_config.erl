@@ -6,8 +6,8 @@
 -define(KEY, {?MODULE, config}).
 
 spec() ->
-  [{http_bind, "CHAT_HTTP_BIND", ip, "127.0.0.1"},
-   {http_port, "CHAT_HTTP_PORT", {int, 1, 65535}, "8080"},
+  [{http_bind, "CHAT_HTTP_BIND", ip, "0.0.0.0"},
+   {http_port, "CHAT_HTTP_PORT", {int, 1, 65535}, "10000"},
    {allowed_origins, "CHAT_ALLOWED_ORIGINS", origins, ""},
    {db_host, "CHAT_DB_HOST", string, "127.0.0.1"},
    {db_port, "CHAT_DB_PORT", {int, 1, 65535}, "5432"},
