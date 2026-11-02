@@ -12,7 +12,7 @@
 -include("chat.hrl").
 -export([init/2, websocket_init/1, websocket_handle/2, websocket_info/2, terminate/3]).
 
--record(st, {conn_id, peer, phase = awaiting_hello, user_id, session_id}).
+-record(st, {conn_id, peer, phase = awaiting_hello, user_id, session_id, typing_cache = #{}}).
 
 init(Req, _Opts) ->
   case chat_http_handler:origin_allowed(Req) of
@@ -67,6 +67,7 @@ hello(ReqId, Body, St) ->
           case chat_auth:authenticate(Token) of
             {ok, #{user_id := U, session_id := S}} ->
               ok = chat_dispatch:join(U),
+              chat_presence:connected(U, self()),
               ?LOG_INFO(#{event => ws_authenticated}),
               Ack = #{protocol_version => ?PROTOCOL_VERSION, capabilities => ?CAPABILITIES, user_id => U,
                       server_time_unix_ms => erlang:system_time(millisecond),
@@ -114,7 +115,37 @@ run(ReqId, {list_conversations, _}, #st{user_id = U} = St) ->
       List = #{conversations => [chat_protocol:conversation_to_pb(C) || C <- Convs]},
       {[reply(ReqId, {conversation_list, List})], St};
     {error, Reason} -> {[domain_err(ReqId, Reason)], St}
+  end;
+
+%% Typing is fire-and-forget: success sends NO reply (the client does not wait for one).
+run(ReqId, {typing, #{conversation_id := C, is_typing := T}}, #st{user_id = U, typing_cache = Cache} = St) ->
+  case chat_typing:relay(U, C, T, self(), Cache) of
+    {ok, Cache1} -> {[], St#st{typing_cache = Cache1}};
+    {dropped, Cache1} -> chat_metrics:inc(typing_dropped_total), {[], St#st{typing_cache = Cache1}};
+    {error, Reason, Cache1} -> {[domain_err(ReqId, Reason)], St#st{typing_cache = Cache1}}
+  end;
+run(ReqId, {get_presence, #{user_ids := Ids}}, #st{user_id = U} = St) ->
+  case chat_presence:snapshot(U, Ids) of
+    {ok, Users} -> {[reply(ReqId, {presence_snapshot, #{users => Users}})], St};
+    {error, Reason} -> {[domain_err(ReqId, Reason)], St}
+  end;
+run(ReqId, {create_group, #{title := T, member_user_ids := Ids}}, #st{user_id = U} = St) ->
+  conversation_reply(ReqId, chat_groups:create(U, T, Ids, self()), St);
+run(ReqId, {add_members, #{conversation_id := C, user_ids := Ids}}, #st{user_id = U} = St) ->
+  conversation_reply(ReqId, chat_groups:add_members(U, C, Ids, self()), St);
+run(ReqId, {remove_member, #{conversation_id := C, user_id := Target}}, #st{user_id = U} = St) ->
+  conversation_reply(ReqId, chat_groups:remove_member(U, C, Target, self()), St);
+run(ReqId, {rename_group, #{conversation_id := C, title := T}}, #st{user_id = U} = St) ->
+  conversation_reply(ReqId, chat_groups:rename(U, C, T, self()), St);
+run(ReqId, {leave_conversation, #{conversation_id := C}}, #st{user_id = U} = St) ->
+  case chat_groups:leave(U, C, self()) of
+    ok -> {[reply(ReqId, {conversation_removed, #{conversation_id => C}})], St};
+    {error, Reason} -> {[domain_err(ReqId, Reason)], St}
   end.
+
+conversation_reply(ReqId, {ok, Info}, St) ->
+  {[reply(ReqId, {conversation, chat_protocol:conversation_to_pb(Info)})], St};
+conversation_reply(ReqId, {error, Reason}, St) -> {[domain_err(ReqId, Reason)], St}.
 
 batch(ReqId, Conv, {ok, Msgs, HasMore}, St) ->
   B = #{conversation_id => Conv, messages => [chat_protocol:message_to_pb(M) || M <- Msgs], has_more => HasMore},
@@ -150,4 +181,6 @@ error_text(invalid) -> <<"invalid request">>;
 error_text(forbidden) -> <<"not a member of this conversation">>;
 error_text(not_found) -> <<"not found">>;
 error_text(rate_limited) -> <<"rate limit exceeded">>;
+error_text(group_full) -> <<"group is full">>;
+error_text(not_a_group) -> <<"only group conversations can be changed">>;
 error_text(_) -> <<"internal error">>.

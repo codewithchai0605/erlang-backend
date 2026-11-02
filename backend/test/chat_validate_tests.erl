@@ -44,3 +44,20 @@ client_message_id_test() ->
   ?assertMatch({error, _}, chat_validate:client_message_id(<<>>)),
   ?assertMatch({error, _}, chat_validate:client_message_id(<<"has space">>)),
   ?assertMatch({error, _}, chat_validate:client_message_id(binary:copy(<<"a">>, 65))).
+
+group_title_test() ->
+  ?assertEqual({ok, <<"Team A">>}, chat_validate:group_title(<<"  Team A ">>)),
+  ?assertEqual({ok, binary:copy(<<"x">>, 100)}, chat_validate:group_title(binary:copy(<<"x">>, 100))),
+  ?assertMatch({error, _}, chat_validate:group_title(binary:copy(<<"x">>, 101))),
+  ?assertMatch({error, _}, chat_validate:group_title(<<"   ">>)),
+  ?assertMatch({error, _}, chat_validate:group_title(<<"bad", 0, "title">>)),
+  ?assertMatch({error, _}, chat_validate:group_title(<<"new\nline">>)),
+  ?assertMatch({error, _}, chat_validate:group_title(undefined)).
+
+uuid_list_test() ->
+  A = <<"123e4567-e89b-12d3-a456-426614174000">>,
+  ?assertEqual({ok, [A]}, chat_validate:uuid_list([A, string:uppercase(A), A], 5)),
+  ?assertEqual({ok, []}, chat_validate:uuid_list([], 5)),
+  ?assertMatch({error, _}, chat_validate:uuid_list([A, <<"nope">>], 5)),
+  ?assertMatch({error, _}, chat_validate:uuid_list([A, A, A], 2)),       %% bound applies BEFORE de-duplication
+  ?assertMatch({error, _}, chat_validate:uuid_list(not_a_list, 5)).

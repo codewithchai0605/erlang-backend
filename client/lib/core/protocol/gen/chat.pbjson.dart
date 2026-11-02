@@ -41,6 +41,22 @@ final $typed_data.Uint8List errorCodeDescriptor = $convert.base64Decode(
     'TUlURUQQBhIgChxFUlJPUl9DT0RFX1VOU1VQUE9SVEVEX0VWRU5UEAcSFwoTRVJST1JfQ09ERV'
     '9JTlRFUk5BTBAIEiAKHEVSUk9SX0NPREVfTUVTU0FHRV9UT09fTEFSR0UQCQ==');
 
+@$core.Deprecated('Use memberRoleDescriptor instead')
+const MemberRole$json = {
+  '1': 'MemberRole',
+  '2': [
+    {'1': 'MEMBER_ROLE_UNSPECIFIED', '2': 0},
+    {'1': 'MEMBER_ROLE_MEMBER', '2': 1},
+    {'1': 'MEMBER_ROLE_ADMIN', '2': 2},
+    {'1': 'MEMBER_ROLE_OWNER', '2': 3},
+  ],
+};
+
+/// Descriptor for `MemberRole`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List memberRoleDescriptor = $convert.base64Decode(
+    'CgpNZW1iZXJSb2xlEhsKF01FTUJFUl9ST0xFX1VOU1BFQ0lGSUVEEAASFgoSTUVNQkVSX1JPTE'
+    'VfTUVNQkVSEAESFQoRTUVNQkVSX1JPTEVfQURNSU4QAhIVChFNRU1CRVJfUk9MRV9PV05FUhAD');
+
 @$core.Deprecated('Use conversationKindDescriptor instead')
 const ConversationKind$json = {
   '1': 'ConversationKind',
@@ -143,6 +159,60 @@ const ClientEnvelope$json = {
       '9': 0,
       '10': 'historyRequest'
     },
+    {
+      '1': 'create_group',
+      '3': 18,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.CreateGroup',
+      '9': 0,
+      '10': 'createGroup'
+    },
+    {
+      '1': 'add_members',
+      '3': 19,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.AddMembers',
+      '9': 0,
+      '10': 'addMembers'
+    },
+    {
+      '1': 'remove_member',
+      '3': 20,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.RemoveMember',
+      '9': 0,
+      '10': 'removeMember'
+    },
+    {
+      '1': 'leave_conversation',
+      '3': 21,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.LeaveConversation',
+      '9': 0,
+      '10': 'leaveConversation'
+    },
+    {
+      '1': 'rename_group',
+      '3': 22,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.RenameGroup',
+      '9': 0,
+      '10': 'renameGroup'
+    },
+    {
+      '1': 'get_presence',
+      '3': 23,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.GetPresence',
+      '9': 0,
+      '10': 'getPresence'
+    },
   ],
   '8': [
     {'1': 'body'},
@@ -161,7 +231,14 @@ final $typed_data.Uint8List clientEnvelopeDescriptor = $convert.base64Decode(
     'EuY2hhdC52MS5DcmVhdGVEaXJlY3RDb252ZXJzYXRpb25IAFIMY3JlYXRlRGlyZWN0EksKEmxp'
     'c3RfY29udmVyc2F0aW9ucxgQIAEoCzIaLmNoYXQudjEuTGlzdENvbnZlcnNhdGlvbnNIAFIRbG'
     'lzdENvbnZlcnNhdGlvbnMSQgoPaGlzdG9yeV9yZXF1ZXN0GBEgASgLMhcuY2hhdC52MS5IaXN0'
-    'b3J5UmVxdWVzdEgAUg5oaXN0b3J5UmVxdWVzdEIGCgRib2R5');
+    'b3J5UmVxdWVzdEgAUg5oaXN0b3J5UmVxdWVzdBI5CgxjcmVhdGVfZ3JvdXAYEiABKAsyFC5jaG'
+    'F0LnYxLkNyZWF0ZUdyb3VwSABSC2NyZWF0ZUdyb3VwEjYKC2FkZF9tZW1iZXJzGBMgASgLMhMu'
+    'Y2hhdC52MS5BZGRNZW1iZXJzSABSCmFkZE1lbWJlcnMSPAoNcmVtb3ZlX21lbWJlchgUIAEoCz'
+    'IVLmNoYXQudjEuUmVtb3ZlTWVtYmVySABSDHJlbW92ZU1lbWJlchJLChJsZWF2ZV9jb252ZXJz'
+    'YXRpb24YFSABKAsyGi5jaGF0LnYxLkxlYXZlQ29udmVyc2F0aW9uSABSEWxlYXZlQ29udmVyc2'
+    'F0aW9uEjkKDHJlbmFtZV9ncm91cBgWIAEoCzIULmNoYXQudjEuUmVuYW1lR3JvdXBIAFILcmVu'
+    'YW1lR3JvdXASOQoMZ2V0X3ByZXNlbmNlGBcgASgLMhQuY2hhdC52MS5HZXRQcmVzZW5jZUgAUg'
+    'tnZXRQcmVzZW5jZUIGCgRib2R5');
 
 @$core.Deprecated('Use helloDescriptor instead')
 const Hello$json = {
@@ -296,6 +373,87 @@ const ListConversations$json = {
 final $typed_data.Uint8List listConversationsDescriptor =
     $convert.base64Decode('ChFMaXN0Q29udmVyc2F0aW9ucw==');
 
+@$core.Deprecated('Use createGroupDescriptor instead')
+const CreateGroup$json = {
+  '1': 'CreateGroup',
+  '2': [
+    {'1': 'title', '3': 1, '4': 1, '5': 9, '10': 'title'},
+    {'1': 'member_user_ids', '3': 2, '4': 3, '5': 9, '10': 'memberUserIds'},
+  ],
+};
+
+/// Descriptor for `CreateGroup`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List createGroupDescriptor = $convert.base64Decode(
+    'CgtDcmVhdGVHcm91cBIUCgV0aXRsZRgBIAEoCVIFdGl0bGUSJgoPbWVtYmVyX3VzZXJfaWRzGA'
+    'IgAygJUg1tZW1iZXJVc2VySWRz');
+
+@$core.Deprecated('Use addMembersDescriptor instead')
+const AddMembers$json = {
+  '1': 'AddMembers',
+  '2': [
+    {'1': 'conversation_id', '3': 1, '4': 1, '5': 9, '10': 'conversationId'},
+    {'1': 'user_ids', '3': 2, '4': 3, '5': 9, '10': 'userIds'},
+  ],
+};
+
+/// Descriptor for `AddMembers`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List addMembersDescriptor = $convert.base64Decode(
+    'CgpBZGRNZW1iZXJzEicKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCVIOY29udmVyc2F0aW9uSWQSGQ'
+    'oIdXNlcl9pZHMYAiADKAlSB3VzZXJJZHM=');
+
+@$core.Deprecated('Use removeMemberDescriptor instead')
+const RemoveMember$json = {
+  '1': 'RemoveMember',
+  '2': [
+    {'1': 'conversation_id', '3': 1, '4': 1, '5': 9, '10': 'conversationId'},
+    {'1': 'user_id', '3': 2, '4': 1, '5': 9, '10': 'userId'},
+  ],
+};
+
+/// Descriptor for `RemoveMember`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List removeMemberDescriptor = $convert.base64Decode(
+    'CgxSZW1vdmVNZW1iZXISJwoPY29udmVyc2F0aW9uX2lkGAEgASgJUg5jb252ZXJzYXRpb25JZB'
+    'IXCgd1c2VyX2lkGAIgASgJUgZ1c2VySWQ=');
+
+@$core.Deprecated('Use leaveConversationDescriptor instead')
+const LeaveConversation$json = {
+  '1': 'LeaveConversation',
+  '2': [
+    {'1': 'conversation_id', '3': 1, '4': 1, '5': 9, '10': 'conversationId'},
+  ],
+};
+
+/// Descriptor for `LeaveConversation`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List leaveConversationDescriptor = $convert.base64Decode(
+    'ChFMZWF2ZUNvbnZlcnNhdGlvbhInCg9jb252ZXJzYXRpb25faWQYASABKAlSDmNvbnZlcnNhdG'
+    'lvbklk');
+
+@$core.Deprecated('Use renameGroupDescriptor instead')
+const RenameGroup$json = {
+  '1': 'RenameGroup',
+  '2': [
+    {'1': 'conversation_id', '3': 1, '4': 1, '5': 9, '10': 'conversationId'},
+    {'1': 'title', '3': 2, '4': 1, '5': 9, '10': 'title'},
+  ],
+};
+
+/// Descriptor for `RenameGroup`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List renameGroupDescriptor = $convert.base64Decode(
+    'CgtSZW5hbWVHcm91cBInCg9jb252ZXJzYXRpb25faWQYASABKAlSDmNvbnZlcnNhdGlvbklkEh'
+    'QKBXRpdGxlGAIgASgJUgV0aXRsZQ==');
+
+@$core.Deprecated('Use getPresenceDescriptor instead')
+const GetPresence$json = {
+  '1': 'GetPresence',
+  '2': [
+    {'1': 'user_ids', '3': 1, '4': 3, '5': 9, '10': 'userIds'},
+  ],
+};
+
+/// Descriptor for `GetPresence`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getPresenceDescriptor = $convert
+    .base64Decode('CgtHZXRQcmVzZW5jZRIZCgh1c2VyX2lkcxgBIAMoCVIHdXNlcklkcw==');
+
 @$core.Deprecated('Use serverEnvelopeDescriptor instead')
 const ServerEnvelope$json = {
   '1': 'ServerEnvelope',
@@ -373,6 +531,42 @@ const ServerEnvelope$json = {
       '9': 0,
       '10': 'receipt'
     },
+    {
+      '1': 'typing',
+      '3': 17,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.TypingUpdate',
+      '9': 0,
+      '10': 'typing'
+    },
+    {
+      '1': 'presence',
+      '3': 18,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.PresenceUpdate',
+      '9': 0,
+      '10': 'presence'
+    },
+    {
+      '1': 'presence_snapshot',
+      '3': 19,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.PresenceSnapshot',
+      '9': 0,
+      '10': 'presenceSnapshot'
+    },
+    {
+      '1': 'conversation_removed',
+      '3': 20,
+      '4': 1,
+      '5': 11,
+      '6': '.chat.v1.ConversationRemoved',
+      '9': 0,
+      '10': 'conversationRemoved'
+    },
   ],
   '8': [
     {'1': 'body'},
@@ -389,8 +583,12 @@ final $typed_data.Uint8List serverEnvelopeDescriptor = $convert.base64Decode(
     'N0GA0gASgLMhkuY2hhdC52MS5Db252ZXJzYXRpb25MaXN0SABSEGNvbnZlcnNhdGlvbkxpc3QS'
     'PwoMY29udmVyc2F0aW9uGA4gASgLMhkuY2hhdC52MS5Db252ZXJzYXRpb25JbmZvSABSDGNvbn'
     'ZlcnNhdGlvbhItCgViYXRjaBgPIAEoCzIVLmNoYXQudjEuTWVzc2FnZUJhdGNoSABSBWJhdGNo'
-    'EjIKB3JlY2VpcHQYECABKAsyFi5jaGF0LnYxLlJlY2VpcHRVcGRhdGVIAFIHcmVjZWlwdEIGCg'
-    'Rib2R5');
+    'EjIKB3JlY2VpcHQYECABKAsyFi5jaGF0LnYxLlJlY2VpcHRVcGRhdGVIAFIHcmVjZWlwdBIvCg'
+    'Z0eXBpbmcYESABKAsyFS5jaGF0LnYxLlR5cGluZ1VwZGF0ZUgAUgZ0eXBpbmcSNQoIcHJlc2Vu'
+    'Y2UYEiABKAsyFy5jaGF0LnYxLlByZXNlbmNlVXBkYXRlSABSCHByZXNlbmNlEkgKEXByZXNlbm'
+    'NlX3NuYXBzaG90GBMgASgLMhkuY2hhdC52MS5QcmVzZW5jZVNuYXBzaG90SABSEHByZXNlbmNl'
+    'U25hcHNob3QSUQoUY29udmVyc2F0aW9uX3JlbW92ZWQYFCABKAsyHC5jaGF0LnYxLkNvbnZlcn'
+    'NhdGlvblJlbW92ZWRIAFITY29udmVyc2F0aW9uUmVtb3ZlZEIGCgRib2R5');
 
 @$core.Deprecated('Use helloAckDescriptor instead')
 const HelloAck$json = {
@@ -518,6 +716,14 @@ const Member$json = {
       '10': 'deliveredUpToSeq'
     },
     {'1': 'read_up_to_seq', '3': 5, '4': 1, '5': 3, '10': 'readUpToSeq'},
+    {
+      '1': 'role',
+      '3': 6,
+      '4': 1,
+      '5': 14,
+      '6': '.chat.v1.MemberRole',
+      '10': 'role'
+    },
   ],
 };
 
@@ -526,7 +732,7 @@ final $typed_data.Uint8List memberDescriptor = $convert.base64Decode(
     'CgZNZW1iZXISFwoHdXNlcl9pZBgBIAEoCVIGdXNlcklkEhoKCHVzZXJuYW1lGAIgASgJUgh1c2'
     'VybmFtZRIhCgxkaXNwbGF5X25hbWUYAyABKAlSC2Rpc3BsYXlOYW1lEi0KE2RlbGl2ZXJlZF91'
     'cF90b19zZXEYBCABKANSEGRlbGl2ZXJlZFVwVG9TZXESIwoOcmVhZF91cF90b19zZXEYBSABKA'
-    'NSC3JlYWRVcFRvU2Vx');
+    'NSC3JlYWRVcFRvU2VxEicKBHJvbGUYBiABKA4yEy5jaGF0LnYxLk1lbWJlclJvbGVSBHJvbGU=');
 
 @$core.Deprecated('Use conversationInfoDescriptor instead')
 const ConversationInfo$json = {
@@ -632,3 +838,66 @@ const ProtocolError$json = {
 final $typed_data.Uint8List protocolErrorDescriptor = $convert.base64Decode(
     'Cg1Qcm90b2NvbEVycm9yEiYKBGNvZGUYASABKA4yEi5jaGF0LnYxLkVycm9yQ29kZVIEY29kZR'
     'IYCgdtZXNzYWdlGAIgASgJUgdtZXNzYWdl');
+
+@$core.Deprecated('Use typingUpdateDescriptor instead')
+const TypingUpdate$json = {
+  '1': 'TypingUpdate',
+  '2': [
+    {'1': 'conversation_id', '3': 1, '4': 1, '5': 9, '10': 'conversationId'},
+    {'1': 'user_id', '3': 2, '4': 1, '5': 9, '10': 'userId'},
+    {'1': 'is_typing', '3': 3, '4': 1, '5': 8, '10': 'isTyping'},
+  ],
+};
+
+/// Descriptor for `TypingUpdate`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List typingUpdateDescriptor = $convert.base64Decode(
+    'CgxUeXBpbmdVcGRhdGUSJwoPY29udmVyc2F0aW9uX2lkGAEgASgJUg5jb252ZXJzYXRpb25JZB'
+    'IXCgd1c2VyX2lkGAIgASgJUgZ1c2VySWQSGwoJaXNfdHlwaW5nGAMgASgIUghpc1R5cGluZw==');
+
+@$core.Deprecated('Use presenceUpdateDescriptor instead')
+const PresenceUpdate$json = {
+  '1': 'PresenceUpdate',
+  '2': [
+    {'1': 'user_id', '3': 1, '4': 1, '5': 9, '10': 'userId'},
+    {'1': 'online', '3': 2, '4': 1, '5': 8, '10': 'online'},
+    {'1': 'last_seen_unix_ms', '3': 3, '4': 1, '5': 3, '10': 'lastSeenUnixMs'},
+  ],
+};
+
+/// Descriptor for `PresenceUpdate`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List presenceUpdateDescriptor = $convert.base64Decode(
+    'Cg5QcmVzZW5jZVVwZGF0ZRIXCgd1c2VyX2lkGAEgASgJUgZ1c2VySWQSFgoGb25saW5lGAIgAS'
+    'gIUgZvbmxpbmUSKQoRbGFzdF9zZWVuX3VuaXhfbXMYAyABKANSDmxhc3RTZWVuVW5peE1z');
+
+@$core.Deprecated('Use presenceSnapshotDescriptor instead')
+const PresenceSnapshot$json = {
+  '1': 'PresenceSnapshot',
+  '2': [
+    {
+      '1': 'users',
+      '3': 1,
+      '4': 3,
+      '5': 11,
+      '6': '.chat.v1.PresenceUpdate',
+      '10': 'users'
+    },
+  ],
+};
+
+/// Descriptor for `PresenceSnapshot`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List presenceSnapshotDescriptor = $convert.base64Decode(
+    'ChBQcmVzZW5jZVNuYXBzaG90Ei0KBXVzZXJzGAEgAygLMhcuY2hhdC52MS5QcmVzZW5jZVVwZG'
+    'F0ZVIFdXNlcnM=');
+
+@$core.Deprecated('Use conversationRemovedDescriptor instead')
+const ConversationRemoved$json = {
+  '1': 'ConversationRemoved',
+  '2': [
+    {'1': 'conversation_id', '3': 1, '4': 1, '5': 9, '10': 'conversationId'},
+  ],
+};
+
+/// Descriptor for `ConversationRemoved`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List conversationRemovedDescriptor = $convert.base64Decode(
+    'ChNDb252ZXJzYXRpb25SZW1vdmVkEicKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCVIOY29udmVyc2'
+    'F0aW9uSWQ=');

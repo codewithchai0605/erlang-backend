@@ -38,6 +38,16 @@ class StoredSession {
         refreshExpiresAt: refreshExpiresAt,
       );
 
+  StoredSession withDisplayName(String name) => StoredSession(
+        userId: userId,
+        username: username,
+        displayName: name,
+        accessToken: accessToken,
+        accessExpiresAt: accessExpiresAt,
+        refreshToken: refreshToken,
+        refreshExpiresAt: refreshExpiresAt,
+      );
+
   Map<String, Object?> toJson() => {
         'userId': userId,
         'username': username,

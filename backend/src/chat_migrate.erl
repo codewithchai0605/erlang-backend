@@ -19,46 +19,66 @@ start_link() ->
 run() ->
   Dir = filename:join(code:priv_dir(chat), "migrations"),
   Files = lists:sort(filelib:wildcard("*.sql", Dir)),
-  case chat_db:with_conn(fun(C) -> locked(C, Dir, Files) end) of
+  case chat_db:with_conn(fun(C) -> run(C, Dir, Files) end) of
     {error, _} = E -> E;
     ok -> ok
   end.
 
-locked(C, Dir, Files) ->
-  _ = epgsql:squery(C, "SELECT pg_advisory_lock(" ++ integer_to_list(?LOCK_KEY) ++ ")"),
-  try
-    case ok_result(epgsql:squery(C, "CREATE TABLE IF NOT EXISTS schema_migrations ("
-                                    "version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())")) of
-      ok -> apply_all(C, Dir, Files);
-      E -> E
-    end
-  after
-    _ = epgsql:squery(C, "SELECT pg_advisory_unlock(" ++ integer_to_list(?LOCK_KEY) ++ ")")
+%% Every step runs inside its own transaction holding pg_advisory_xact_lock, which is released
+%% automatically at COMMIT/ROLLBACK. Unlike a session-level lock this is safe behind a transaction-pooling
+%% proxy (PgBouncer, Neon's "-pooler" endpoints), where consecutive statements may reach different backends.
+run(C, Dir, Files) ->
+  case in_tx(C, fun() ->
+         ok_result(epgsql:squery(C, "CREATE TABLE IF NOT EXISTS schema_migrations ("
+                                    "version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())"))
+       end) of
+    ok -> apply_all(C, Dir, Files);
+    E -> E
   end.
 
 apply_all(_C, _Dir, []) -> ok;
 apply_all(C, Dir, [File | Rest]) ->
   Version = filename:rootname(File),
-  case epgsql:equery(C, "SELECT 1 FROM schema_migrations WHERE version = $1", [Version]) of
-    {ok, _, [_ | _]} -> apply_all(C, Dir, Rest);
-    {ok, _, []} ->
-      case apply_one(C, filename:join(Dir, File), Version) of
-        ok -> ?LOG_INFO(#{event => migration_applied, version => Version}), apply_all(C, Dir, Rest);
-        {error, R} -> {error, {Version, R}}
-      end;
-    {error, R} -> {error, R}
+  case apply_one(C, filename:join(Dir, File), Version) of
+    applied -> ?LOG_INFO(#{event => migration_applied, version => Version}), apply_all(C, Dir, Rest);
+    skipped -> apply_all(C, Dir, Rest);
+    {error, R} -> {error, {Version, R}}
   end.
 
 apply_one(C, Path, Version) ->
   {ok, Sql} = file:read_file(Path),
+  in_tx(C, fun() ->
+    case epgsql:equery(C, "SELECT 1 FROM schema_migrations WHERE version = $1", [Version]) of
+      {ok, _, [_ | _]} -> skipped;      %% another node (or an earlier boot) already applied it
+      {ok, _, []} ->
+        case ok_result(epgsql:squery(C, Sql)) of
+          ok ->
+            case ok_result(epgsql:equery(C, "INSERT INTO schema_migrations (version) VALUES ($1)", [Version])) of
+              ok -> applied;
+              E -> E
+            end;
+          E -> E
+        end;
+      {error, _} = E -> E
+    end
+  end).
+
+%% BEGIN; take the lock; run Fun; COMMIT on ok/applied/skipped, ROLLBACK on anything else.
+in_tx(C, Fun) ->
   _ = epgsql:squery(C, "BEGIN"),
-  Result = case ok_result(epgsql:squery(C, Sql)) of
-    ok -> ok_result(epgsql:equery(C, "INSERT INTO schema_migrations (version) VALUES ($1)", [Version]));
-    E -> E
+  Result = try
+    case ok_result(epgsql:squery(C, "SELECT pg_advisory_xact_lock(" ++ integer_to_list(?LOCK_KEY) ++ ")")) of
+      ok -> Fun();
+      E -> E
+    end
+  catch Class:Reason -> {error, {Class, Reason}}
   end,
   case Result of
-    ok -> ok_result(epgsql:squery(C, "COMMIT"));
-    Err -> _ = epgsql:squery(C, "ROLLBACK"), Err
+    R when R =:= ok; R =:= applied; R =:= skipped ->
+      case ok_result(epgsql:squery(C, "COMMIT")) of ok -> R; Err -> Err end;
+    Failed ->
+      _ = epgsql:squery(C, "ROLLBACK"),
+      Failed
   end.
 
 %% epgsql returns a list of results for multi-statement simple queries.

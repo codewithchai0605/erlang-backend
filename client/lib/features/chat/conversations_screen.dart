@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../app/theme.dart';
 import '../../core/db/app_database.dart';
-import '../../core/networking/api_client.dart';
-import '../../core/networking/ws_service.dart';
 import '../../providers.dart';
-import '../auth/auth_controller.dart';
+import '../presence/presence.dart';
+import 'chat_avatar.dart';
 import 'connection_banner.dart';
+import 'error_text.dart';
+import 'typing_label.dart';
+import 'user_lookup.dart';
 
 String formatListTime(int ms, {DateTime? now}) {
   if (ms <= 0) return '';
@@ -18,21 +21,60 @@ String formatListTime(int ms, {DateTime? now}) {
   return sameDay ? DateFormat.Hm().format(t) : DateFormat.MMMd().format(t);
 }
 
-class ConversationsScreen extends ConsumerWidget {
+/// Ask for a username and open (or create) the direct chat with that person. Shared by the button and Ctrl+N.
+Future<void> startNewChat(BuildContext context, WidgetRef ref) async {
+  final user = await promptForUser(context, ref, title: 'New chat', actionLabel: 'Start');
+  if (user == null || !context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  final router = GoRouter.of(context);
+  try {
+    final id = await ref.read(chatSyncProvider)!.createDirect(user.id);
+    router.go('/chats/c/$id');
+  } catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text(describeError(e))));
+  }
+}
+
+class ConversationsScreen extends ConsumerStatefulWidget {
   const ConversationsScreen({super.key, this.selectedId});
   final String? selectedId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConversationsScreen> createState() => _ConversationsScreenState();
+}
+
+class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  List<ConversationSummary> _filter(List<ConversationSummary> all) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return all;
+    return all.where((s) => s.title.toLowerCase().contains(q) || (s.peerUsername ?? '').toLowerCase().contains(q)).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final summaries = ref.watch(conversationSummariesProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chats'),
         actions: [
           IconButton(
-            tooltip: 'Sign out',
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+            tooltip: 'New group (Ctrl+Shift+N)',
+            icon: const Icon(Icons.group_add_outlined),
+            onPressed: () => context.go('/chats/new-group'),
+          ),
+          IconButton(
+            tooltip: 'Settings (Ctrl+,)',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.go('/settings'),
           ),
         ],
       ),
@@ -41,87 +83,130 @@ class ConversationsScreen extends ConsumerWidget {
         Expanded(
           child: summaries.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => const Center(child: Text('Could not load conversations')),
-            data: (list) => list.isEmpty
-                ? const Center(child: Padding(padding: EdgeInsets.all(24), child: Text('No conversations yet. Start one with "New chat".', textAlign: TextAlign.center)))
-                : ListView.builder(
-                    itemCount: list.length,
-                    itemBuilder: (context, i) => _ConversationTile(summary: list[i], selected: list[i].id == selectedId),
+            error: (e, _) => Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Text('Could not load conversations'),
+                const SizedBox(height: Gap.s),
+                FilledButton.tonal(
+                  onPressed: () => ref.invalidate(conversationSummariesProvider),
+                  child: const Text('Try again'),
+                ),
+              ]),
+            ),
+            data: (all) {
+              if (all.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(Gap.l),
+                    child: Text('No conversations yet.\nStart one with "New chat", or create a group.', textAlign: TextAlign.center),
                   ),
+                );
+              }
+              final list = _filter(all);
+              return Column(children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(Gap.m, Gap.s, Gap.m, Gap.xs),
+                  child: TextField(
+                    controller: _search,
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: 'Search chats',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _query.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Clear search',
+                              icon: const Icon(Icons.close),
+                              onPressed: () => setState(() {
+                                _search.clear();
+                                _query = '';
+                              }),
+                            ),
+                    ),
+                    onChanged: (v) => setState(() => _query = v),
+                  ),
+                ),
+                Expanded(
+                  child: list.isEmpty
+                      ? const Center(child: Text('No chats match your search.'))
+                      : ListView.builder(
+                          itemCount: list.length,
+                          itemBuilder: (context, i) => _ConversationTile(summary: list[i], selected: list[i].id == widget.selectedId),
+                        ),
+                ),
+              ]);
+            },
           ),
         ),
       ]),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _newChat(context, ref),
+        tooltip: 'New chat (Ctrl+N)',
+        onPressed: () => startNewChat(context, ref),
         icon: const Icon(Icons.add_comment),
         label: const Text('New chat'),
       ),
     );
   }
-
-  Future<void> _newChat(BuildContext context, WidgetRef ref) async {
-    final controller = TextEditingController();
-    final username = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New chat'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: "Their username"),
-          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: const Text('Start')),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (username == null || username.isEmpty || !context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final router = GoRouter.of(context);
-    try {
-      final user = await ref.read(apiClientProvider).lookupUser(username);
-      final id = await ref.read(chatSyncProvider)!.createDirect(user.id);
-      router.go('/chats/c/$id');
-    } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.code == 'not_found' ? 'No user with that name' : e.message)));
-    } on ProtocolFailure catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text("Couldn't start the chat. Are you online?")));
-    }
-  }
 }
 
-class _ConversationTile extends StatelessWidget {
+class _ConversationTile extends ConsumerWidget {
   const _ConversationTile({required this.summary, required this.selected});
   final ConversationSummary summary;
   final bool selected;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final s = summary;
-    final initial = s.title.isEmpty ? '?' : s.title.characters.first.toUpperCase();
-    return ListTile(
+    final typingIds = ref.watch(typingUsersProvider(s.id));
+    final presence = s.isGroup || s.peerUserId == null ? null : ref.watch(peerPresenceProvider(s.peerUserId!));
+
+    // Names are only needed while somebody is typing, so only then do we subscribe to the member list.
+    String typing = '';
+    if (typingIds.isNotEmpty) {
+      final members = ref.watch(membersProvider(s.id)).value ?? const <MemberRow>[];
+      typing = s.isGroup
+          ? typingLabel(typingIds, (id) => members.where((m) => m.userId == id).firstOrNull?.displayName)
+          : 'typing…';
+    }
+
+    final scheme = Theme.of(context).colorScheme;
+    final subtitleText = typing.isNotEmpty ? typing : (s.lastBody ?? '');
+    final subtitleStyle = typing.isNotEmpty ? TextStyle(color: ChatColors.of(context).typing, fontStyle: FontStyle.italic) : null;
+
+    final spoken = [
+      s.title,
+      if (s.isGroup) 'group, ${s.memberCount} members',
+      if (presence?.online == true) 'online',
+      if (s.unread > 0) '${s.unread} unread',
+      if (subtitleText.isNotEmpty) subtitleText,
+    ].join(', ');
+
+    return Semantics(
+      label: spoken,
+      button: true,
       selected: selected,
-      leading: CircleAvatar(child: Text(initial)),
-      title: Text(s.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(s.lastBody ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(formatListTime(s.lastActivityMs), style: Theme.of(context).textTheme.labelSmall),
-          if (s.unread > 0)
-            Semantics(
-              label: '${s.unread} unread',
-              child: Badge(label: Text('${s.unread}')),
-            ),
-        ],
-      ),
+      excludeSemantics: true,
       onTap: () => context.go('/chats/c/${s.id}'),
+      child: ListTile(
+        selected: selected,
+        selectedTileColor: scheme.secondaryContainer.withValues(alpha: 0.5),
+        leading: ChatAvatar(name: s.title, isGroup: s.isGroup, online: presence?.online),
+        title: Text(s.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(subtitleText, maxLines: 1, overflow: TextOverflow.ellipsis, style: subtitleStyle),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(formatListTime(s.lastActivityMs), style: Theme.of(context).textTheme.labelSmall),
+            if (s.unread > 0) Badge(label: Text('${s.unread}')),
+          ],
+        ),
+        onTap: () => context.go('/chats/c/${s.id}'),
+      ),
     );
   }
 }
+
+/// Convenience used by the header and the info screen.
+String presenceText(PresenceInfo? p, {DateTime? now}) => p == null ? '' : lastSeenLabel(p, now: now ?? DateTime.now());

@@ -99,6 +99,15 @@ class AuthRepository {
     }
   }
 
+  /// Persists a new display name (after the server accepted it) and returns the updated session.
+  Future<StoredSession?> saveDisplayName(String name) async {
+    final s = _session;
+    if (s == null) return null;
+    final next = s.withDisplayName(name);
+    await _storage.write(next);
+    return _session = next;
+  }
+
   Future<void> clearLocal() async {
     _session = null;
     await _storage.clear();

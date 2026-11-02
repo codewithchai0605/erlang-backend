@@ -6,10 +6,14 @@ import '../features/auth/auth_controller.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
 import '../features/auth/splash_screen.dart';
+import '../features/chat/conversation_info_screen.dart';
+import '../features/chat/new_group_screen.dart';
 import '../features/home/home_shell.dart';
+import '../features/settings/settings_screen.dart';
 
-/// Routes: /splash (restoring session), /login, /register, /chats (list; two-pane on wide windows) and
-/// /chats/c/:id (a conversation; on narrow screens it replaces the list and Back returns to it).
+/// Routes: /splash (restoring session), /login, /register, /chats (list; two-pane on wide windows),
+/// /chats/c/:id (a conversation; on narrow screens it replaces the list and Back returns to it),
+/// /chats/c/:id/info (group or contact details), /chats/new-group and /settings.
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
   ref.listen(authControllerProvider, (_, _) => refresh.value++);
@@ -39,12 +43,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/chats',
         builder: (_, _) => const HomeShell(),
         routes: [
+          GoRoute(path: 'new-group', builder: (_, _) => const NewGroupScreen()),
           GoRoute(
             path: 'c/:id',
             builder: (_, state) => HomeShell(selectedId: state.pathParameters['id']),
+            routes: [
+              GoRoute(
+                path: 'info',
+                builder: (_, state) => ConversationInfoScreen(conversationId: state.pathParameters['id']!),
+              ),
+            ],
           ),
         ],
       ),
+      GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
     ],
   );
 });

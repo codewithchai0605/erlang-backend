@@ -37,3 +37,24 @@ EUnit for pure functions (`chat_validate_tests`), Common Test for processes and 
 
 ## Releases
 `rebar.config` `{relx, ...}` builds a self-contained release; `vm.args.src` and the environment configure it at start. Distribution is bound to loopback because an Erlang node with a known cookie can run arbitrary code (Milestone 7 explores distribution in an isolated setup only).
+
+## Dynamic supervision: `simple_one_for_one` (Milestone 5)
+`chat_task_sup` creates children at runtime (`supervisor:start_child(chat_task_sup, [Fun])`), one per job. Compare with `chat_sup`, whose children are fixed at startup. `restart => temporary` means a crashed job is never restarted: re-running a half-finished broadcast would be wrong, and the crash is logged instead. `count_children/1` provides a cheap overload guard. Read: `chat_task_sup.erl`, `chat_task.erl`, `chat_otp_SUITE:task_supervisor_isolates_failures`.
+
+## Monitors, and rebuilding state from the source of truth
+`chat_presence` calls `erlang:monitor(process, Pid)` for every connection and receives `{'DOWN', ...}` when one dies; no connection has to say goodbye (a crash or a pulled network cable cannot say goodbye). Its state is a cache of facts that also live in `pg`, so `init/1` rebuilds from `pg:which_groups/1` after a crash instead of starting empty. Rule: state you can re-derive should be re-derived, not persisted. Read: `chat_presence.erl`, `chat_otp_SUITE:presence_restart_rebuilds_state`.
+
+## Timers and the stale-timer pattern
+The grace period uses `erlang:send_after/3`. Cancelling a timer that already fired cannot unsend its message, so the message carries a unique id and `handle_info` ignores it unless the id still matches the stored one. This pattern removes a whole class of race conditions. Read: `chat_presence:drop_conn/4`, `handle_info({grace_over, ...})`.
+
+## Why a supervisor's child ORDER is a design decision
+With `rest_for_one`, "last child" means "crashing it disturbs nobody". Presence is placed last on purpose. If it were placed before the listener, every presence bug would disconnect every user. Read: `chat_sup.erl`, ADR 0010.
+
+## Pitfall found by testing: `with_transaction/2` swallows exceptions
+`epgsql:with_transaction/2` converts any exception to `{rollback, Reason}`; the code expected `throw({abort, X})` to propagate. A race handler built on that assumption was dead code until a test provoked it (8 sockets sending the same message id at once). Lessons: read the library source when behaviour matters, and write the regression test that fails without the fix (the mutation check in the Milestone 5 session did exactly that). Read: `chat_db:transaction/1`, `chat_e2e_SUITE:concurrent_duplicate_sends`.
+
+## Ephemeral vs durable events
+Messages are durable (stored, sequenced, synced). Typing and presence are ephemeral (relayed, never stored, may be lost). The client therefore *expires* typing indicators itself and *re-asks* presence after reconnecting. Designing for loss, instead of trying to make every event reliable, keeps the system simple. Read: `chat_typing.erl`, `typing_tracker.dart`.
+
+## Containers and releases
+A release bundles the Erlang VM, but its NIFs (`crypto`, `bcrypt`) link system libraries dynamically: the build and runtime images must come from the same distribution. (This is easy to see: running a conda-built release on Ubuntu fails with `libcrypto.so.3: version OPENSSL_3.4.0 not found`.) Signals matter too: `docker stop` sends SIGTERM to PID 1; `exec` in the entrypoint makes the VM PID 1's child so it receives it and runs `prep_stop` (graceful close). Read: `Dockerfile`, `docker/entrypoint.sh`.

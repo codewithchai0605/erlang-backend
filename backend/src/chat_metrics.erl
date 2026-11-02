@@ -7,7 +7,9 @@
 -define(GAUGES, []).
 -define(NAMES, [http_requests_total, ws_connections_total, ws_auth_failures_total,
                 ws_frames_rejected_total, messages_accepted_total, messages_duplicate_total,
-                rate_limited_total, slow_consumers_dropped_total]).
+                rate_limited_total, slow_consumers_dropped_total, typing_events_total,
+                typing_dropped_total, groups_created_total, presence_transitions_total,
+                tasks_dropped_total, tasks_failed_total]).
 
 init() ->
   case persistent_term:get(?KEY, undefined) of
@@ -26,6 +28,7 @@ render() ->
   Ref = persistent_term:get(?KEY),
   Counters = [line(Name, counters:get(Ref, idx(Name))) || Name <- ?NAMES],
   Extra = [line(ws_connections_authenticated, chat_dispatch:connection_count()),
+           line(presence_online_users, chat_presence:online_count()),
            line(erlang_process_count, erlang:system_info(process_count)),
            line(erlang_memory_total_bytes, erlang:memory(total))] ++ pool_lines(),
   iolist_to_binary(Counters ++ Extra).

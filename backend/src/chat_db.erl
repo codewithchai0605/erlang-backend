@@ -42,9 +42,14 @@ equery(C, Sql, Params) ->
 
 %% @doc Run Fun(Connection) in a transaction. Use must/1 or throw({abort, Reason}) to roll back;
 %% the result is Fun's value or {error, Reason} after an abort.
+%%
+%% `reraise => true` matters: epgsql:with_transaction/2 (no options) returns {rollback, Reason} for EVERY
+%% exception, which would turn a throw({abort, _}) into an unexpected shape AND silently swallow real crashes.
+%% With reraise the transaction is rolled back and the exception propagates: aborts are caught here, anything
+%% else reaches run/3, which resets the connection and lets the caller crash (let-it-crash).
 transaction(Fun) ->
   with_conn(fun(C) ->
-    try epgsql:with_transaction(C, Fun)
+    try epgsql:with_transaction(C, Fun, #{reraise => true})
     catch throw:{abort, Reason} -> {error, Reason}
     end
   end).

@@ -31,6 +31,12 @@ enum ClientEnvelope_Body {
   createDirect,
   listConversations,
   historyRequest,
+  createGroup,
+  addMembers,
+  removeMember,
+  leaveConversation,
+  renameGroup,
+  getPresence,
   notSet
 }
 
@@ -46,6 +52,12 @@ class ClientEnvelope extends $pb.GeneratedMessage {
     CreateDirectConversation? createDirect,
     ListConversations? listConversations,
     HistoryRequest? historyRequest,
+    CreateGroup? createGroup,
+    AddMembers? addMembers,
+    RemoveMember? removeMember,
+    LeaveConversation? leaveConversation,
+    RenameGroup? renameGroup,
+    GetPresence? getPresence,
   }) {
     final result = ClientEnvelope._();
     if (requestId != null) result.requestId = requestId;
@@ -58,6 +70,12 @@ class ClientEnvelope extends $pb.GeneratedMessage {
     if (createDirect != null) result.createDirect = createDirect;
     if (listConversations != null) result.listConversations = listConversations;
     if (historyRequest != null) result.historyRequest = historyRequest;
+    if (createGroup != null) result.createGroup = createGroup;
+    if (addMembers != null) result.addMembers = addMembers;
+    if (removeMember != null) result.removeMember = removeMember;
+    if (leaveConversation != null) result.leaveConversation = leaveConversation;
+    if (renameGroup != null) result.renameGroup = renameGroup;
+    if (getPresence != null) result.getPresence = getPresence;
     return result;
   }
 
@@ -81,13 +99,19 @@ class ClientEnvelope extends $pb.GeneratedMessage {
     15: ClientEnvelope_Body.createDirect,
     16: ClientEnvelope_Body.listConversations,
     17: ClientEnvelope_Body.historyRequest,
+    18: ClientEnvelope_Body.createGroup,
+    19: ClientEnvelope_Body.addMembers,
+    20: ClientEnvelope_Body.removeMember,
+    21: ClientEnvelope_Body.leaveConversation,
+    22: ClientEnvelope_Body.renameGroup,
+    23: ClientEnvelope_Body.getPresence,
     0: ClientEnvelope_Body.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
       _omitMessageNames ? '' : 'ClientEnvelope',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
       createEmptyInstance: ClientEnvelope.$_createMessage)
-    ..oo(0, [9, 10, 11, 12, 13, 14, 15, 16, 17])
+    ..oo(0, [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
     ..aOS(1, _omitFieldNames ? '' : 'requestId')
     ..aOM<Hello>(9, _omitFieldNames ? '' : 'hello',
         subBuilder: Hello.$_createMessage)
@@ -107,6 +131,18 @@ class ClientEnvelope extends $pb.GeneratedMessage {
         subBuilder: ListConversations.$_createMessage)
     ..aOM<HistoryRequest>(17, _omitFieldNames ? '' : 'historyRequest',
         subBuilder: HistoryRequest.$_createMessage)
+    ..aOM<CreateGroup>(18, _omitFieldNames ? '' : 'createGroup',
+        subBuilder: CreateGroup.$_createMessage)
+    ..aOM<AddMembers>(19, _omitFieldNames ? '' : 'addMembers',
+        subBuilder: AddMembers.$_createMessage)
+    ..aOM<RemoveMember>(20, _omitFieldNames ? '' : 'removeMember',
+        subBuilder: RemoveMember.$_createMessage)
+    ..aOM<LeaveConversation>(21, _omitFieldNames ? '' : 'leaveConversation',
+        subBuilder: LeaveConversation.$_createMessage)
+    ..aOM<RenameGroup>(22, _omitFieldNames ? '' : 'renameGroup',
+        subBuilder: RenameGroup.$_createMessage)
+    ..aOM<GetPresence>(23, _omitFieldNames ? '' : 'getPresence',
+        subBuilder: GetPresence.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -140,6 +176,12 @@ class ClientEnvelope extends $pb.GeneratedMessage {
   @$pb.TagNumber(15)
   @$pb.TagNumber(16)
   @$pb.TagNumber(17)
+  @$pb.TagNumber(18)
+  @$pb.TagNumber(19)
+  @$pb.TagNumber(20)
+  @$pb.TagNumber(21)
+  @$pb.TagNumber(22)
+  @$pb.TagNumber(23)
   ClientEnvelope_Body whichBody() =>
       _ClientEnvelope_BodyByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(9)
@@ -151,6 +193,12 @@ class ClientEnvelope extends $pb.GeneratedMessage {
   @$pb.TagNumber(15)
   @$pb.TagNumber(16)
   @$pb.TagNumber(17)
+  @$pb.TagNumber(18)
+  @$pb.TagNumber(19)
+  @$pb.TagNumber(20)
+  @$pb.TagNumber(21)
+  @$pb.TagNumber(22)
+  @$pb.TagNumber(23)
   void clearBody() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -260,6 +308,72 @@ class ClientEnvelope extends $pb.GeneratedMessage {
   void clearHistoryRequest() => $_clearField(17);
   @$pb.TagNumber(17)
   HistoryRequest ensureHistoryRequest() => $_ensure(9);
+
+  @$pb.TagNumber(18)
+  CreateGroup get createGroup => $_getN(10);
+  @$pb.TagNumber(18)
+  set createGroup(CreateGroup value) => $_setField(18, value);
+  @$pb.TagNumber(18)
+  $core.bool hasCreateGroup() => $_has(10);
+  @$pb.TagNumber(18)
+  void clearCreateGroup() => $_clearField(18);
+  @$pb.TagNumber(18)
+  CreateGroup ensureCreateGroup() => $_ensure(10);
+
+  @$pb.TagNumber(19)
+  AddMembers get addMembers => $_getN(11);
+  @$pb.TagNumber(19)
+  set addMembers(AddMembers value) => $_setField(19, value);
+  @$pb.TagNumber(19)
+  $core.bool hasAddMembers() => $_has(11);
+  @$pb.TagNumber(19)
+  void clearAddMembers() => $_clearField(19);
+  @$pb.TagNumber(19)
+  AddMembers ensureAddMembers() => $_ensure(11);
+
+  @$pb.TagNumber(20)
+  RemoveMember get removeMember => $_getN(12);
+  @$pb.TagNumber(20)
+  set removeMember(RemoveMember value) => $_setField(20, value);
+  @$pb.TagNumber(20)
+  $core.bool hasRemoveMember() => $_has(12);
+  @$pb.TagNumber(20)
+  void clearRemoveMember() => $_clearField(20);
+  @$pb.TagNumber(20)
+  RemoveMember ensureRemoveMember() => $_ensure(12);
+
+  @$pb.TagNumber(21)
+  LeaveConversation get leaveConversation => $_getN(13);
+  @$pb.TagNumber(21)
+  set leaveConversation(LeaveConversation value) => $_setField(21, value);
+  @$pb.TagNumber(21)
+  $core.bool hasLeaveConversation() => $_has(13);
+  @$pb.TagNumber(21)
+  void clearLeaveConversation() => $_clearField(21);
+  @$pb.TagNumber(21)
+  LeaveConversation ensureLeaveConversation() => $_ensure(13);
+
+  @$pb.TagNumber(22)
+  RenameGroup get renameGroup => $_getN(14);
+  @$pb.TagNumber(22)
+  set renameGroup(RenameGroup value) => $_setField(22, value);
+  @$pb.TagNumber(22)
+  $core.bool hasRenameGroup() => $_has(14);
+  @$pb.TagNumber(22)
+  void clearRenameGroup() => $_clearField(22);
+  @$pb.TagNumber(22)
+  RenameGroup ensureRenameGroup() => $_ensure(14);
+
+  @$pb.TagNumber(23)
+  GetPresence get getPresence => $_getN(15);
+  @$pb.TagNumber(23)
+  set getPresence(GetPresence value) => $_setField(23, value);
+  @$pb.TagNumber(23)
+  $core.bool hasGetPresence() => $_has(15);
+  @$pb.TagNumber(23)
+  void clearGetPresence() => $_clearField(23);
+  @$pb.TagNumber(23)
+  GetPresence ensureGetPresence() => $_ensure(15);
 }
 
 class Hello extends $pb.GeneratedMessage {
@@ -885,6 +999,378 @@ class ListConversations extends $pb.GeneratedMessage {
   static ListConversations? _defaultInstance;
 }
 
+/// ---- groups (Milestone 5). Replies: `conversation` (the updated group) or `conversation_removed` for leave.
+class CreateGroup extends $pb.GeneratedMessage {
+  factory CreateGroup({
+    $core.String? title,
+    $core.Iterable<$core.String>? memberUserIds,
+  }) {
+    final result = CreateGroup._();
+    if (title != null) result.title = title;
+    if (memberUserIds != null) result.memberUserIds.addAll(memberUserIds);
+    return result;
+  }
+
+  CreateGroup._();
+
+  factory CreateGroup.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CreateGroup()..mergeFromBuffer(data, registry);
+  factory CreateGroup.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      CreateGroup()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'CreateGroup',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: CreateGroup.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'title')
+    ..pPS(2, _omitFieldNames ? '' : 'memberUserIds')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateGroup clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateGroup copyWith(void Function(CreateGroup) updates) =>
+      super.copyWith((message) => updates(message as CreateGroup))
+          as CreateGroup;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use CreateGroup() / CreateGroup.new instead')
+  static CreateGroup create() => CreateGroup._();
+  static $pb.GeneratedMessage $_createMessage() => CreateGroup._();
+  @$core.override
+  CreateGroup createEmptyInstance() => CreateGroup._();
+  @$core.pragma('dart2js:noInline')
+  static CreateGroup getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CreateGroup>(
+          CreateGroup.$_createMessage);
+  static CreateGroup? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get title => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set title($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasTitle() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTitle() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$core.String> get memberUserIds => $_getList(1);
+}
+
+class AddMembers extends $pb.GeneratedMessage {
+  factory AddMembers({
+    $core.String? conversationId,
+    $core.Iterable<$core.String>? userIds,
+  }) {
+    final result = AddMembers._();
+    if (conversationId != null) result.conversationId = conversationId;
+    if (userIds != null) result.userIds.addAll(userIds);
+    return result;
+  }
+
+  AddMembers._();
+
+  factory AddMembers.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AddMembers()..mergeFromBuffer(data, registry);
+  factory AddMembers.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      AddMembers()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'AddMembers',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: AddMembers.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'conversationId')
+    ..pPS(2, _omitFieldNames ? '' : 'userIds')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AddMembers clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AddMembers copyWith(void Function(AddMembers) updates) =>
+      super.copyWith((message) => updates(message as AddMembers)) as AddMembers;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use AddMembers() / AddMembers.new instead')
+  static AddMembers create() => AddMembers._();
+  static $pb.GeneratedMessage $_createMessage() => AddMembers._();
+  @$core.override
+  AddMembers createEmptyInstance() => AddMembers._();
+  @$core.pragma('dart2js:noInline')
+  static AddMembers getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AddMembers>(AddMembers.$_createMessage);
+  static AddMembers? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get conversationId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set conversationId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasConversationId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearConversationId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$core.String> get userIds => $_getList(1);
+}
+
+class RemoveMember extends $pb.GeneratedMessage {
+  factory RemoveMember({
+    $core.String? conversationId,
+    $core.String? userId,
+  }) {
+    final result = RemoveMember._();
+    if (conversationId != null) result.conversationId = conversationId;
+    if (userId != null) result.userId = userId;
+    return result;
+  }
+
+  RemoveMember._();
+
+  factory RemoveMember.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RemoveMember()..mergeFromBuffer(data, registry);
+  factory RemoveMember.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RemoveMember()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RemoveMember',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: RemoveMember.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'conversationId')
+    ..aOS(2, _omitFieldNames ? '' : 'userId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RemoveMember clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RemoveMember copyWith(void Function(RemoveMember) updates) =>
+      super.copyWith((message) => updates(message as RemoveMember))
+          as RemoveMember;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use RemoveMember() / RemoveMember.new instead')
+  static RemoveMember create() => RemoveMember._();
+  static $pb.GeneratedMessage $_createMessage() => RemoveMember._();
+  @$core.override
+  RemoveMember createEmptyInstance() => RemoveMember._();
+  @$core.pragma('dart2js:noInline')
+  static RemoveMember getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<RemoveMember>(
+          RemoveMember.$_createMessage);
+  static RemoveMember? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get conversationId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set conversationId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasConversationId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearConversationId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get userId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set userId($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasUserId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearUserId() => $_clearField(2);
+}
+
+class LeaveConversation extends $pb.GeneratedMessage {
+  factory LeaveConversation({
+    $core.String? conversationId,
+  }) {
+    final result = LeaveConversation._();
+    if (conversationId != null) result.conversationId = conversationId;
+    return result;
+  }
+
+  LeaveConversation._();
+
+  factory LeaveConversation.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LeaveConversation()..mergeFromBuffer(data, registry);
+  factory LeaveConversation.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      LeaveConversation()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'LeaveConversation',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: LeaveConversation.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'conversationId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LeaveConversation clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  LeaveConversation copyWith(void Function(LeaveConversation) updates) =>
+      super.copyWith((message) => updates(message as LeaveConversation))
+          as LeaveConversation;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use LeaveConversation() / LeaveConversation.new instead')
+  static LeaveConversation create() => LeaveConversation._();
+  static $pb.GeneratedMessage $_createMessage() => LeaveConversation._();
+  @$core.override
+  LeaveConversation createEmptyInstance() => LeaveConversation._();
+  @$core.pragma('dart2js:noInline')
+  static LeaveConversation getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<LeaveConversation>(
+          LeaveConversation.$_createMessage);
+  static LeaveConversation? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get conversationId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set conversationId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasConversationId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearConversationId() => $_clearField(1);
+}
+
+class RenameGroup extends $pb.GeneratedMessage {
+  factory RenameGroup({
+    $core.String? conversationId,
+    $core.String? title,
+  }) {
+    final result = RenameGroup._();
+    if (conversationId != null) result.conversationId = conversationId;
+    if (title != null) result.title = title;
+    return result;
+  }
+
+  RenameGroup._();
+
+  factory RenameGroup.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RenameGroup()..mergeFromBuffer(data, registry);
+  factory RenameGroup.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      RenameGroup()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RenameGroup',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: RenameGroup.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'conversationId')
+    ..aOS(2, _omitFieldNames ? '' : 'title')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RenameGroup clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RenameGroup copyWith(void Function(RenameGroup) updates) =>
+      super.copyWith((message) => updates(message as RenameGroup))
+          as RenameGroup;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use RenameGroup() / RenameGroup.new instead')
+  static RenameGroup create() => RenameGroup._();
+  static $pb.GeneratedMessage $_createMessage() => RenameGroup._();
+  @$core.override
+  RenameGroup createEmptyInstance() => RenameGroup._();
+  @$core.pragma('dart2js:noInline')
+  static RenameGroup getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<RenameGroup>(
+          RenameGroup.$_createMessage);
+  static RenameGroup? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get conversationId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set conversationId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasConversationId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearConversationId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get title => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set title($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTitle() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTitle() => $_clearField(2);
+}
+
+/// Presence of the users I share a conversation with. Empty user_ids = all of them.
+class GetPresence extends $pb.GeneratedMessage {
+  factory GetPresence({
+    $core.Iterable<$core.String>? userIds,
+  }) {
+    final result = GetPresence._();
+    if (userIds != null) result.userIds.addAll(userIds);
+    return result;
+  }
+
+  GetPresence._();
+
+  factory GetPresence.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetPresence()..mergeFromBuffer(data, registry);
+  factory GetPresence.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      GetPresence()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetPresence',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: GetPresence.$_createMessage)
+    ..pPS(1, _omitFieldNames ? '' : 'userIds')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetPresence clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetPresence copyWith(void Function(GetPresence) updates) =>
+      super.copyWith((message) => updates(message as GetPresence))
+          as GetPresence;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use GetPresence() / GetPresence.new instead')
+  static GetPresence create() => GetPresence._();
+  static $pb.GeneratedMessage $_createMessage() => GetPresence._();
+  @$core.override
+  GetPresence createEmptyInstance() => GetPresence._();
+  @$core.pragma('dart2js:noInline')
+  static GetPresence getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<GetPresence>(
+          GetPresence.$_createMessage);
+  static GetPresence? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<$core.String> get userIds => $_getList(0);
+}
+
 enum ServerEnvelope_Body {
   helloAck,
   accepted,
@@ -894,6 +1380,10 @@ enum ServerEnvelope_Body {
   conversation,
   batch,
   receipt,
+  typing,
+  presence,
+  presenceSnapshot,
+  conversationRemoved,
   notSet
 }
 
@@ -908,6 +1398,10 @@ class ServerEnvelope extends $pb.GeneratedMessage {
     ConversationInfo? conversation,
     MessageBatch? batch,
     ReceiptUpdate? receipt,
+    TypingUpdate? typing,
+    PresenceUpdate? presence,
+    PresenceSnapshot? presenceSnapshot,
+    ConversationRemoved? conversationRemoved,
   }) {
     final result = ServerEnvelope._();
     if (requestId != null) result.requestId = requestId;
@@ -919,6 +1413,11 @@ class ServerEnvelope extends $pb.GeneratedMessage {
     if (conversation != null) result.conversation = conversation;
     if (batch != null) result.batch = batch;
     if (receipt != null) result.receipt = receipt;
+    if (typing != null) result.typing = typing;
+    if (presence != null) result.presence = presence;
+    if (presenceSnapshot != null) result.presenceSnapshot = presenceSnapshot;
+    if (conversationRemoved != null)
+      result.conversationRemoved = conversationRemoved;
     return result;
   }
 
@@ -941,13 +1440,17 @@ class ServerEnvelope extends $pb.GeneratedMessage {
     14: ServerEnvelope_Body.conversation,
     15: ServerEnvelope_Body.batch,
     16: ServerEnvelope_Body.receipt,
+    17: ServerEnvelope_Body.typing,
+    18: ServerEnvelope_Body.presence,
+    19: ServerEnvelope_Body.presenceSnapshot,
+    20: ServerEnvelope_Body.conversationRemoved,
     0: ServerEnvelope_Body.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
       _omitMessageNames ? '' : 'ServerEnvelope',
       package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
       createEmptyInstance: ServerEnvelope.$_createMessage)
-    ..oo(0, [9, 10, 11, 12, 13, 14, 15, 16])
+    ..oo(0, [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
     ..aOS(1, _omitFieldNames ? '' : 'requestId')
     ..aOM<HelloAck>(9, _omitFieldNames ? '' : 'helloAck',
         subBuilder: HelloAck.$_createMessage)
@@ -965,6 +1468,14 @@ class ServerEnvelope extends $pb.GeneratedMessage {
         subBuilder: MessageBatch.$_createMessage)
     ..aOM<ReceiptUpdate>(16, _omitFieldNames ? '' : 'receipt',
         subBuilder: ReceiptUpdate.$_createMessage)
+    ..aOM<TypingUpdate>(17, _omitFieldNames ? '' : 'typing',
+        subBuilder: TypingUpdate.$_createMessage)
+    ..aOM<PresenceUpdate>(18, _omitFieldNames ? '' : 'presence',
+        subBuilder: PresenceUpdate.$_createMessage)
+    ..aOM<PresenceSnapshot>(19, _omitFieldNames ? '' : 'presenceSnapshot',
+        subBuilder: PresenceSnapshot.$_createMessage)
+    ..aOM<ConversationRemoved>(20, _omitFieldNames ? '' : 'conversationRemoved',
+        subBuilder: ConversationRemoved.$_createMessage)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -997,6 +1508,10 @@ class ServerEnvelope extends $pb.GeneratedMessage {
   @$pb.TagNumber(14)
   @$pb.TagNumber(15)
   @$pb.TagNumber(16)
+  @$pb.TagNumber(17)
+  @$pb.TagNumber(18)
+  @$pb.TagNumber(19)
+  @$pb.TagNumber(20)
   ServerEnvelope_Body whichBody() =>
       _ServerEnvelope_BodyByTag[$_whichOneof(0)]!;
   @$pb.TagNumber(9)
@@ -1007,6 +1522,10 @@ class ServerEnvelope extends $pb.GeneratedMessage {
   @$pb.TagNumber(14)
   @$pb.TagNumber(15)
   @$pb.TagNumber(16)
+  @$pb.TagNumber(17)
+  @$pb.TagNumber(18)
+  @$pb.TagNumber(19)
+  @$pb.TagNumber(20)
   void clearBody() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -1105,6 +1624,50 @@ class ServerEnvelope extends $pb.GeneratedMessage {
   void clearReceipt() => $_clearField(16);
   @$pb.TagNumber(16)
   ReceiptUpdate ensureReceipt() => $_ensure(8);
+
+  @$pb.TagNumber(17)
+  TypingUpdate get typing => $_getN(9);
+  @$pb.TagNumber(17)
+  set typing(TypingUpdate value) => $_setField(17, value);
+  @$pb.TagNumber(17)
+  $core.bool hasTyping() => $_has(9);
+  @$pb.TagNumber(17)
+  void clearTyping() => $_clearField(17);
+  @$pb.TagNumber(17)
+  TypingUpdate ensureTyping() => $_ensure(9);
+
+  @$pb.TagNumber(18)
+  PresenceUpdate get presence => $_getN(10);
+  @$pb.TagNumber(18)
+  set presence(PresenceUpdate value) => $_setField(18, value);
+  @$pb.TagNumber(18)
+  $core.bool hasPresence() => $_has(10);
+  @$pb.TagNumber(18)
+  void clearPresence() => $_clearField(18);
+  @$pb.TagNumber(18)
+  PresenceUpdate ensurePresence() => $_ensure(10);
+
+  @$pb.TagNumber(19)
+  PresenceSnapshot get presenceSnapshot => $_getN(11);
+  @$pb.TagNumber(19)
+  set presenceSnapshot(PresenceSnapshot value) => $_setField(19, value);
+  @$pb.TagNumber(19)
+  $core.bool hasPresenceSnapshot() => $_has(11);
+  @$pb.TagNumber(19)
+  void clearPresenceSnapshot() => $_clearField(19);
+  @$pb.TagNumber(19)
+  PresenceSnapshot ensurePresenceSnapshot() => $_ensure(11);
+
+  @$pb.TagNumber(20)
+  ConversationRemoved get conversationRemoved => $_getN(12);
+  @$pb.TagNumber(20)
+  set conversationRemoved(ConversationRemoved value) => $_setField(20, value);
+  @$pb.TagNumber(20)
+  $core.bool hasConversationRemoved() => $_has(12);
+  @$pb.TagNumber(20)
+  void clearConversationRemoved() => $_clearField(20);
+  @$pb.TagNumber(20)
+  ConversationRemoved ensureConversationRemoved() => $_ensure(12);
 }
 
 class HelloAck extends $pb.GeneratedMessage {
@@ -1548,6 +2111,7 @@ class Member extends $pb.GeneratedMessage {
     $core.String? displayName,
     $fixnum.Int64? deliveredUpToSeq,
     $fixnum.Int64? readUpToSeq,
+    MemberRole? role,
   }) {
     final result = Member._();
     if (userId != null) result.userId = userId;
@@ -1555,6 +2119,7 @@ class Member extends $pb.GeneratedMessage {
     if (displayName != null) result.displayName = displayName;
     if (deliveredUpToSeq != null) result.deliveredUpToSeq = deliveredUpToSeq;
     if (readUpToSeq != null) result.readUpToSeq = readUpToSeq;
+    if (role != null) result.role = role;
     return result;
   }
 
@@ -1576,6 +2141,8 @@ class Member extends $pb.GeneratedMessage {
     ..aOS(3, _omitFieldNames ? '' : 'displayName')
     ..aInt64(4, _omitFieldNames ? '' : 'deliveredUpToSeq')
     ..aInt64(5, _omitFieldNames ? '' : 'readUpToSeq')
+    ..aE<MemberRole>(6, _omitFieldNames ? '' : 'role',
+        enumValues: MemberRole.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1642,6 +2209,15 @@ class Member extends $pb.GeneratedMessage {
   $core.bool hasReadUpToSeq() => $_has(4);
   @$pb.TagNumber(5)
   void clearReadUpToSeq() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  MemberRole get role => $_getN(5);
+  @$pb.TagNumber(6)
+  set role(MemberRole value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasRole() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearRole() => $_clearField(6);
 }
 
 class ConversationInfo extends $pb.GeneratedMessage {
@@ -1971,6 +2547,280 @@ class ProtocolError extends $pb.GeneratedMessage {
   $core.bool hasMessage() => $_has(1);
   @$pb.TagNumber(2)
   void clearMessage() => $_clearField(2);
+}
+
+/// ---- ephemeral signals (Milestone 5)
+class TypingUpdate extends $pb.GeneratedMessage {
+  factory TypingUpdate({
+    $core.String? conversationId,
+    $core.String? userId,
+    $core.bool? isTyping,
+  }) {
+    final result = TypingUpdate._();
+    if (conversationId != null) result.conversationId = conversationId;
+    if (userId != null) result.userId = userId;
+    if (isTyping != null) result.isTyping = isTyping;
+    return result;
+  }
+
+  TypingUpdate._();
+
+  factory TypingUpdate.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      TypingUpdate()..mergeFromBuffer(data, registry);
+  factory TypingUpdate.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      TypingUpdate()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'TypingUpdate',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: TypingUpdate.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'conversationId')
+    ..aOS(2, _omitFieldNames ? '' : 'userId')
+    ..aOB(3, _omitFieldNames ? '' : 'isTyping')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TypingUpdate clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TypingUpdate copyWith(void Function(TypingUpdate) updates) =>
+      super.copyWith((message) => updates(message as TypingUpdate))
+          as TypingUpdate;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use TypingUpdate() / TypingUpdate.new instead')
+  static TypingUpdate create() => TypingUpdate._();
+  static $pb.GeneratedMessage $_createMessage() => TypingUpdate._();
+  @$core.override
+  TypingUpdate createEmptyInstance() => TypingUpdate._();
+  @$core.pragma('dart2js:noInline')
+  static TypingUpdate getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<TypingUpdate>(
+          TypingUpdate.$_createMessage);
+  static TypingUpdate? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get conversationId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set conversationId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasConversationId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearConversationId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get userId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set userId($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasUserId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearUserId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.bool get isTyping => $_getBF(2);
+  @$pb.TagNumber(3)
+  set isTyping($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasIsTyping() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearIsTyping() => $_clearField(3);
+}
+
+class PresenceUpdate extends $pb.GeneratedMessage {
+  factory PresenceUpdate({
+    $core.String? userId,
+    $core.bool? online,
+    $fixnum.Int64? lastSeenUnixMs,
+  }) {
+    final result = PresenceUpdate._();
+    if (userId != null) result.userId = userId;
+    if (online != null) result.online = online;
+    if (lastSeenUnixMs != null) result.lastSeenUnixMs = lastSeenUnixMs;
+    return result;
+  }
+
+  PresenceUpdate._();
+
+  factory PresenceUpdate.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PresenceUpdate()..mergeFromBuffer(data, registry);
+  factory PresenceUpdate.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PresenceUpdate()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'PresenceUpdate',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: PresenceUpdate.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'userId')
+    ..aOB(2, _omitFieldNames ? '' : 'online')
+    ..aInt64(3, _omitFieldNames ? '' : 'lastSeenUnixMs')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PresenceUpdate clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PresenceUpdate copyWith(void Function(PresenceUpdate) updates) =>
+      super.copyWith((message) => updates(message as PresenceUpdate))
+          as PresenceUpdate;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use PresenceUpdate() / PresenceUpdate.new instead')
+  static PresenceUpdate create() => PresenceUpdate._();
+  static $pb.GeneratedMessage $_createMessage() => PresenceUpdate._();
+  @$core.override
+  PresenceUpdate createEmptyInstance() => PresenceUpdate._();
+  @$core.pragma('dart2js:noInline')
+  static PresenceUpdate getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PresenceUpdate>(
+          PresenceUpdate.$_createMessage);
+  static PresenceUpdate? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get userId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set userId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasUserId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearUserId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.bool get online => $_getBF(1);
+  @$pb.TagNumber(2)
+  set online($core.bool value) => $_setBool(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasOnline() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearOnline() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get lastSeenUnixMs => $_getI64(2);
+  @$pb.TagNumber(3)
+  set lastSeenUnixMs($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasLastSeenUnixMs() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearLastSeenUnixMs() => $_clearField(3);
+}
+
+class PresenceSnapshot extends $pb.GeneratedMessage {
+  factory PresenceSnapshot({
+    $core.Iterable<PresenceUpdate>? users,
+  }) {
+    final result = PresenceSnapshot._();
+    if (users != null) result.users.addAll(users);
+    return result;
+  }
+
+  PresenceSnapshot._();
+
+  factory PresenceSnapshot.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PresenceSnapshot()..mergeFromBuffer(data, registry);
+  factory PresenceSnapshot.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      PresenceSnapshot()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'PresenceSnapshot',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: PresenceSnapshot.$_createMessage)
+    ..pPM<PresenceUpdate>(1, _omitFieldNames ? '' : 'users',
+        subBuilder: PresenceUpdate.$_createMessage)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PresenceSnapshot clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PresenceSnapshot copyWith(void Function(PresenceSnapshot) updates) =>
+      super.copyWith((message) => updates(message as PresenceSnapshot))
+          as PresenceSnapshot;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core.Deprecated('Use PresenceSnapshot() / PresenceSnapshot.new instead')
+  static PresenceSnapshot create() => PresenceSnapshot._();
+  static $pb.GeneratedMessage $_createMessage() => PresenceSnapshot._();
+  @$core.override
+  PresenceSnapshot createEmptyInstance() => PresenceSnapshot._();
+  @$core.pragma('dart2js:noInline')
+  static PresenceSnapshot getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PresenceSnapshot>(
+          PresenceSnapshot.$_createMessage);
+  static PresenceSnapshot? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<PresenceUpdate> get users => $_getList(0);
+}
+
+/// The caller is no longer a member (removed, or they left): drop the conversation locally.
+class ConversationRemoved extends $pb.GeneratedMessage {
+  factory ConversationRemoved({
+    $core.String? conversationId,
+  }) {
+    final result = ConversationRemoved._();
+    if (conversationId != null) result.conversationId = conversationId;
+    return result;
+  }
+
+  ConversationRemoved._();
+
+  factory ConversationRemoved.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ConversationRemoved()..mergeFromBuffer(data, registry);
+  factory ConversationRemoved.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      ConversationRemoved()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ConversationRemoved',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'chat.v1'),
+      createEmptyInstance: ConversationRemoved.$_createMessage)
+    ..aOS(1, _omitFieldNames ? '' : 'conversationId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ConversationRemoved clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ConversationRemoved copyWith(void Function(ConversationRemoved) updates) =>
+      super.copyWith((message) => updates(message as ConversationRemoved))
+          as ConversationRemoved;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  @$core
+      .Deprecated('Use ConversationRemoved() / ConversationRemoved.new instead')
+  static ConversationRemoved create() => ConversationRemoved._();
+  static $pb.GeneratedMessage $_createMessage() => ConversationRemoved._();
+  @$core.override
+  ConversationRemoved createEmptyInstance() => ConversationRemoved._();
+  @$core.pragma('dart2js:noInline')
+  static ConversationRemoved getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ConversationRemoved>(
+          ConversationRemoved.$_createMessage);
+  static ConversationRemoved? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get conversationId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set conversationId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasConversationId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearConversationId() => $_clearField(1);
 }
 
 const $core.bool _omitFieldNames =

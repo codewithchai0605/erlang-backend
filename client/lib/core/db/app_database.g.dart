@@ -539,6 +539,16 @@ class $MembersTable extends Members with TableInfo<$MembersTable, MemberRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  @override
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('member'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     conversationId,
@@ -547,6 +557,7 @@ class $MembersTable extends Members with TableInfo<$MembersTable, MemberRow> {
     displayName,
     deliveredSeq,
     readSeq,
+    role,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -613,6 +624,12 @@ class $MembersTable extends Members with TableInfo<$MembersTable, MemberRow> {
         readSeq.isAcceptableOrUnknown(data['read_seq']!, _readSeqMeta),
       );
     }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    }
     return context;
   }
 
@@ -646,6 +663,10 @@ class $MembersTable extends Members with TableInfo<$MembersTable, MemberRow> {
         DriftSqlType.int,
         data['${effectivePrefix}read_seq'],
       )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
     );
   }
 
@@ -662,6 +683,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
   final String displayName;
   final int deliveredSeq;
   final int readSeq;
+  final String role;
   const MemberRow({
     required this.conversationId,
     required this.userId,
@@ -669,6 +691,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     required this.displayName,
     required this.deliveredSeq,
     required this.readSeq,
+    required this.role,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -679,6 +702,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     map['display_name'] = Variable<String>(displayName);
     map['delivered_seq'] = Variable<int>(deliveredSeq);
     map['read_seq'] = Variable<int>(readSeq);
+    map['role'] = Variable<String>(role);
     return map;
   }
 
@@ -690,6 +714,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
       displayName: Value(displayName),
       deliveredSeq: Value(deliveredSeq),
       readSeq: Value(readSeq),
+      role: Value(role),
     );
   }
 
@@ -705,6 +730,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
       displayName: serializer.fromJson<String>(json['displayName']),
       deliveredSeq: serializer.fromJson<int>(json['deliveredSeq']),
       readSeq: serializer.fromJson<int>(json['readSeq']),
+      role: serializer.fromJson<String>(json['role']),
     );
   }
   @override
@@ -717,6 +743,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
       'displayName': serializer.toJson<String>(displayName),
       'deliveredSeq': serializer.toJson<int>(deliveredSeq),
       'readSeq': serializer.toJson<int>(readSeq),
+      'role': serializer.toJson<String>(role),
     };
   }
 
@@ -727,6 +754,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     String? displayName,
     int? deliveredSeq,
     int? readSeq,
+    String? role,
   }) => MemberRow(
     conversationId: conversationId ?? this.conversationId,
     userId: userId ?? this.userId,
@@ -734,6 +762,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     displayName: displayName ?? this.displayName,
     deliveredSeq: deliveredSeq ?? this.deliveredSeq,
     readSeq: readSeq ?? this.readSeq,
+    role: role ?? this.role,
   );
   MemberRow copyWithCompanion(MembersCompanion data) {
     return MemberRow(
@@ -749,6 +778,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
           ? data.deliveredSeq.value
           : this.deliveredSeq,
       readSeq: data.readSeq.present ? data.readSeq.value : this.readSeq,
+      role: data.role.present ? data.role.value : this.role,
     );
   }
 
@@ -760,7 +790,8 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
           ..write('username: $username, ')
           ..write('displayName: $displayName, ')
           ..write('deliveredSeq: $deliveredSeq, ')
-          ..write('readSeq: $readSeq')
+          ..write('readSeq: $readSeq, ')
+          ..write('role: $role')
           ..write(')'))
         .toString();
   }
@@ -773,6 +804,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     displayName,
     deliveredSeq,
     readSeq,
+    role,
   );
   @override
   bool operator ==(Object other) =>
@@ -783,7 +815,8 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
           other.username == this.username &&
           other.displayName == this.displayName &&
           other.deliveredSeq == this.deliveredSeq &&
-          other.readSeq == this.readSeq);
+          other.readSeq == this.readSeq &&
+          other.role == this.role);
 }
 
 class MembersCompanion extends UpdateCompanion<MemberRow> {
@@ -793,6 +826,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
   final Value<String> displayName;
   final Value<int> deliveredSeq;
   final Value<int> readSeq;
+  final Value<String> role;
   final Value<int> rowid;
   const MembersCompanion({
     this.conversationId = const Value.absent(),
@@ -801,6 +835,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     this.displayName = const Value.absent(),
     this.deliveredSeq = const Value.absent(),
     this.readSeq = const Value.absent(),
+    this.role = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MembersCompanion.insert({
@@ -810,6 +845,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     required String displayName,
     this.deliveredSeq = const Value.absent(),
     this.readSeq = const Value.absent(),
+    this.role = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : conversationId = Value(conversationId),
        userId = Value(userId),
@@ -822,6 +858,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     Expression<String>? displayName,
     Expression<int>? deliveredSeq,
     Expression<int>? readSeq,
+    Expression<String>? role,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -831,6 +868,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
       if (displayName != null) 'display_name': displayName,
       if (deliveredSeq != null) 'delivered_seq': deliveredSeq,
       if (readSeq != null) 'read_seq': readSeq,
+      if (role != null) 'role': role,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -842,6 +880,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     Value<String>? displayName,
     Value<int>? deliveredSeq,
     Value<int>? readSeq,
+    Value<String>? role,
     Value<int>? rowid,
   }) {
     return MembersCompanion(
@@ -851,6 +890,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
       displayName: displayName ?? this.displayName,
       deliveredSeq: deliveredSeq ?? this.deliveredSeq,
       readSeq: readSeq ?? this.readSeq,
+      role: role ?? this.role,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -876,6 +916,9 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     if (readSeq.present) {
       map['read_seq'] = Variable<int>(readSeq.value);
     }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -891,6 +934,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
           ..write('displayName: $displayName, ')
           ..write('deliveredSeq: $deliveredSeq, ')
           ..write('readSeq: $readSeq, ')
+          ..write('role: $role, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1705,6 +1749,7 @@ typedef $$MembersTableCreateCompanionBuilder = MembersCompanion Function({
   required String displayName,
   Value<int> deliveredSeq,
   Value<int> readSeq,
+  Value<String> role,
   Value<int> rowid,
 });
 typedef $$MembersTableUpdateCompanionBuilder = MembersCompanion Function({
@@ -1714,6 +1759,7 @@ typedef $$MembersTableUpdateCompanionBuilder = MembersCompanion Function({
   Value<String> displayName,
   Value<int> deliveredSeq,
   Value<int> readSeq,
+  Value<String> role,
   Value<int> rowid,
 });
 
@@ -1753,6 +1799,11 @@ class $$MembersTableFilterComposer
 
   ColumnFilters<int> get readSeq => $composableBuilder(
     column: $table.readSeq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1795,6 +1846,11 @@ class $$MembersTableOrderingComposer
     column: $table.readSeq,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MembersTableAnnotationComposer
@@ -1829,6 +1885,9 @@ class $$MembersTableAnnotationComposer
 
   GeneratedColumn<int> get readSeq =>
       $composableBuilder(column: $table.readSeq, builder: (column) => column);
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
 }
 
 class $$MembersTableTableManager
@@ -1865,6 +1924,7 @@ class $$MembersTableTableManager
                 Value<String> displayName = const Value.absent(),
                 Value<int> deliveredSeq = const Value.absent(),
                 Value<int> readSeq = const Value.absent(),
+                Value<String> role = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MembersCompanion(
                 conversationId: conversationId,
@@ -1873,6 +1933,7 @@ class $$MembersTableTableManager
                 displayName: displayName,
                 deliveredSeq: deliveredSeq,
                 readSeq: readSeq,
+                role: role,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1883,6 +1944,7 @@ class $$MembersTableTableManager
                 required String displayName,
                 Value<int> deliveredSeq = const Value.absent(),
                 Value<int> readSeq = const Value.absent(),
+                Value<String> role = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MembersCompanion.insert(
                 conversationId: conversationId,
@@ -1891,6 +1953,7 @@ class $$MembersTableTableManager
                 displayName: displayName,
                 deliveredSeq: deliveredSeq,
                 readSeq: readSeq,
+                role: role,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

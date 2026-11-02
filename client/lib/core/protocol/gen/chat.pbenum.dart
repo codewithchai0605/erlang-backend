@@ -57,6 +57,31 @@ class ErrorCode extends $pb.ProtobufEnum {
   const ErrorCode._(super.value, super.name);
 }
 
+class MemberRole extends $pb.ProtobufEnum {
+  static const MemberRole MEMBER_ROLE_UNSPECIFIED =
+      MemberRole._(0, _omitEnumNames ? '' : 'MEMBER_ROLE_UNSPECIFIED');
+  static const MemberRole MEMBER_ROLE_MEMBER =
+      MemberRole._(1, _omitEnumNames ? '' : 'MEMBER_ROLE_MEMBER');
+  static const MemberRole MEMBER_ROLE_ADMIN =
+      MemberRole._(2, _omitEnumNames ? '' : 'MEMBER_ROLE_ADMIN');
+  static const MemberRole MEMBER_ROLE_OWNER =
+      MemberRole._(3, _omitEnumNames ? '' : 'MEMBER_ROLE_OWNER');
+
+  static const $core.List<MemberRole> values = <MemberRole>[
+    MEMBER_ROLE_UNSPECIFIED,
+    MEMBER_ROLE_MEMBER,
+    MEMBER_ROLE_ADMIN,
+    MEMBER_ROLE_OWNER,
+  ];
+
+  static final $core.List<MemberRole?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static MemberRole? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const MemberRole._(super.value, super.name);
+}
+
 class ConversationKind extends $pb.ProtobufEnum {
   static const ConversationKind CONVERSATION_KIND_UNSPECIFIED =
       ConversationKind._(

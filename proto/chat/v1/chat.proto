@@ -1,6 +1,7 @@
 // Chat protocol v1. Source of truth for Erlang (gpb) and Dart (protoc-gen-dart).
 // Rules: never reuse a field number; when removing a field, `reserved` its number and name.
-// Not yet compiled with protoc in the authoring sandbox (none installed) - see docs/protocol.md.
+// Compatibility: every change since v1 was ADDITIVE (new fields / new oneof variants), so protocol_version stays 1.
+// New capabilities are advertised in HelloAck.capabilities instead. See docs/protocol.md.
 syntax = "proto3";
 
 package chat.v1;
@@ -16,6 +17,13 @@ enum ErrorCode {
   ERROR_CODE_UNSUPPORTED_EVENT = 7;
   ERROR_CODE_INTERNAL = 8;
   ERROR_CODE_MESSAGE_TOO_LARGE = 9;
+}
+
+enum MemberRole {
+  MEMBER_ROLE_UNSPECIFIED = 0;
+  MEMBER_ROLE_MEMBER = 1;
+  MEMBER_ROLE_ADMIN = 2;            // reserved in the schema; groups currently have an owner and members
+  MEMBER_ROLE_OWNER = 3;
 }
 
 enum ConversationKind {
@@ -38,6 +46,12 @@ message ClientEnvelope {
     CreateDirectConversation create_direct = 15;
     ListConversations list_conversations = 16;
     HistoryRequest history_request = 17; // backward pagination: messages before a sequence number
+    CreateGroup create_group = 18;               // Milestone 5
+    AddMembers add_members = 19;
+    RemoveMember remove_member = 20;
+    LeaveConversation leave_conversation = 21;
+    RenameGroup rename_group = 22;
+    GetPresence get_presence = 23;
   }
 }
 
@@ -86,6 +100,36 @@ message CreateDirectConversation {
 
 message ListConversations {}
 
+// ---- groups (Milestone 5). Replies: `conversation` (the updated group) or `conversation_removed` for leave.
+message CreateGroup {
+  string title = 1;                 // 1..100 characters
+  repeated string member_user_ids = 2;  // everyone except the creator, who is added as owner automatically
+}
+
+message AddMembers {
+  string conversation_id = 1;
+  repeated string user_ids = 2;     // owner only; new members see history from the moment they join
+}
+
+message RemoveMember {
+  string conversation_id = 1;
+  string user_id = 2;               // owner only, and never the owner themselves (use LeaveConversation)
+}
+
+message LeaveConversation {
+  string conversation_id = 1;       // any member of a group; ownership passes to the longest-standing member
+}
+
+message RenameGroup {
+  string conversation_id = 1;
+  string title = 2;                 // owner only
+}
+
+// Presence of the users I share a conversation with. Empty user_ids = all of them.
+message GetPresence {
+  repeated string user_ids = 1;
+}
+
 // ---------------------------------------------------------------- server -> client
 
 message ServerEnvelope {
@@ -99,6 +143,10 @@ message ServerEnvelope {
     ConversationInfo conversation = 14;
     MessageBatch batch = 15;
     ReceiptUpdate receipt = 16;
+    TypingUpdate typing = 17;                    // Milestone 5 (all ephemeral: never stored, never replayed)
+    PresenceUpdate presence = 18;
+    PresenceSnapshot presence_snapshot = 19;
+    ConversationRemoved conversation_removed = 20;
   }
 }
 
@@ -142,6 +190,7 @@ message Member {
   string display_name = 3;
   int64 delivered_up_to_seq = 4;
   int64 read_up_to_seq = 5;
+  MemberRole role = 6;
 }
 
 message ConversationInfo {
@@ -167,4 +216,26 @@ message ReceiptUpdate {
 message ProtocolError {
   ErrorCode code = 1;
   string message = 2;
+}
+
+// ---- ephemeral signals (Milestone 5)
+message TypingUpdate {
+  string conversation_id = 1;
+  string user_id = 2;
+  bool is_typing = 3;               // clients also expire an indicator after a few seconds without a refresh
+}
+
+message PresenceUpdate {
+  string user_id = 1;
+  bool online = 2;
+  int64 last_seen_unix_ms = 3;      // 0 = never seen; meaningful when online is false
+}
+
+message PresenceSnapshot {
+  repeated PresenceUpdate users = 1;
+}
+
+// The caller is no longer a member (removed, or they left): drop the conversation locally.
+message ConversationRemoved {
+  string conversation_id = 1;
 }

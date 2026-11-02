@@ -5,7 +5,10 @@
 - **Passwords**: bcrypt via the `bcrypt` library (no custom hashing). Length 8-72 bytes (bcrypt ignores bytes past 72, so longer input is rejected, not truncated). Login for unknown users burns equal CPU (`dummy_verify`) and returns the same generic error.
 - **Tokens**: opaque 256-bit random access and refresh tokens; only SHA-256 hashes are stored. Access TTL default 15 min, refresh 30 days. **Refresh rotation with reuse detection**: presenting an already-rotated refresh token revokes the whole session and closes its live sockets. Logout and logout-all revoke server-side and close live sockets immediately.
 - **Client storage**: tokens live only in the platform secure store (flutter_secure_storage), never in the cache database or logs.
-- **Authorization**: every conversation operation checks membership (`chat_conversations:require_member/2`); non-members get PERMISSION_DENIED.
+- **Authorization**: every conversation operation checks membership (`chat_conversations:require_member/2`); non-members get PERMISSION_DENIED. Group management additionally requires the `owner` role, read from the database on every call. A removed member loses access immediately; new members cannot read history from before they joined.
+- **Presence privacy**: you can only query (and only receive) presence of users you share a conversation with; other ids are silently omitted so presence cannot be used to probe the user base. Typing events require membership and are rate-limited.
+- **Database TLS**: `CHAT_DB_SSL=require|verify` (SNI always sent). `verify` checks the certificate chain and host name against the OS trust store. Tested against a server that rejects plaintext.
+- **Container**: the image runs as a non-root user from a read-only directory, with epmd and the Erlang distribution bound to loopback, crash dumps disabled, and no `.env` baked in.
 - **Input validation**: usernames, display names, UUIDs, client message ids, text (UTF-8, no NUL, bounded) validated after decoding; JSON bodies limited to 16 KB; WebSocket frames limited by config.
 - **SQL injection**: every query is parameterised; no SQL is built from input.
 - **Rate limits**: per-IP on register/login/refresh/hello, per-user on user lookup and sends (fixed windows in ETS). Limits are config values.
@@ -21,6 +24,9 @@
 4. **Established WebSockets outlive the 15-minute access token** (authentication happens at connect time); they are closed on logout/revocation, not on token expiry.
 5. **Refresh retry after a lost response is treated as reuse** and signs the user out; a short grace window would be friendlier but weakens theft detection (documented trade-off).
 6. **Username lookup and registration reveal whether a username exists.** Mitigated by rate limits only.
-7. The PostgreSQL connection is unencrypted (assumes localhost or a private network); `epgsql` TLS options are not configured.
+7. The PostgreSQL connection is **unencrypted unless you set `CHAT_DB_SSL`**. `require` encrypts but does not authenticate the server (like libpq `sslmode=require`); use `verify` for managed databases once it works. Default is `disable` for local development.
 8. No account recovery, email verification, or device management UI yet.
-9. Dependency versions are unpinned until the first resolve (see ADR 0002); audit them when locking.
+9. Dependency versions are pinned by `rebar.lock`; audit them when updating. The protobuf *plugin* (`rebar3_gpb_plugin`) is not locked by rebar3; the backend was tested against gpb 4.21.7 and 5.0.0.
+10. **Single node only.** Rate limits, presence and WebSocket fan-out are in memory. Running two instances behind a load balancer would make limits per-instance and presence/typing/receipt pushes miss users connected to the other instance (messages themselves stay correct: they are in PostgreSQL and clients re-sync). Run one instance (see operations.md).
+11. **Presence/typing metadata** (who is online, last seen) is visible to every peer; there is no "hide my status" setting yet.
+12. **Secrets in uploaded archives**: a `.env` is git-ignored and docker-ignored, but anything you zip or paste elsewhere leaves your control. Rotate any credential that has been shared.

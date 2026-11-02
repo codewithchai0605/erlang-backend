@@ -1,0 +1,37 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Deploy: push this repo to GitHub/GitLab, then Render dashboard -> New -> Blueprint -> pick the repo.
+# Render builds ./Dockerfile, injects PORT, health-checks /healthz, and terminates TLS for you
+# (clients use https:// and wss://).
+#
+# DATABASE: this blueprint expects an external PostgreSQL (e.g. Neon). Render asks for CHAT_DATABASE_URL when
+# you create the blueprint: paste the connection string (postgresql://user:pass@host/db?sslmode=require).
+# To use a Render-managed Postgres instead, uncomment the `databases:` block and the fromDatabase entry below.
+services:
+  - type: web
+    name: chat-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free                      # free instances sleep after ~15 min idle; clients reconnect and re-sync automatically
+    region: singapore               # keep it next to your database (Neon ap-southeast-1 is in Singapore)
+    healthCheckPath: /healthz
+    envVars:
+      - key: CHAT_DATABASE_URL
+        sync: false                 # secret: entered in the dashboard, never committed
+      # - key: CHAT_DATABASE_URL    # (Render-managed Postgres alternative)
+      #   fromDatabase:
+      #     name: chat-db
+      #     property: connectionString
+      - key: CHAT_NODE_COOKIE
+        generateValue: true         # random secret for the (loopback-only) Erlang distribution
+      - key: CHAT_DB_POOL_SIZE
+        value: "5"                  # free database plans allow few connections
+      - key: CHAT_RUN_MIGRATIONS
+        value: "true"
+
+# databases:
+#   - name: chat-db
+#     plan: free
+#     region: singapore
+#     databaseName: chat
+#     user: chat

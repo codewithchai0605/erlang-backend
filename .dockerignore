@@ -1,19 +1,29 @@
+# Keep the build context small AND deterministic: nothing local may leak into the image.
 .git
 .gitignore
+.gitattributes
+.vscode
+.idea
+**/*.iml
+
+# Secrets and local configuration: never baked into an image.
 .env
 .env.*
 !.env.example
 
+# Local build output (the image builds its own; stale/Windows-built artefacts would break it).
 **/_build
-**/build
-**/.dart_tool
-**/.idea
-**/.vscode
-**/node_modules
-**/coverage
+**/deps
+**/ebin
+backend/rebar3.crashdump
+backend/erl_crash.dump
+backend/src/gen
+backend/include/chat_pb.hrl
 
-client/
-docs/
-scripts/
-testdata/
-*.zip
+# The Flutter client is not part of the server image.
+client
+
+# Docs and scripts are not needed at runtime.
+docs
+scripts
+*.md

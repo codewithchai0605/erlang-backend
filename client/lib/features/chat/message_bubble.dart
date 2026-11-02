@@ -22,6 +22,7 @@ class MessageBubble extends StatelessWidget {
     required this.text,
     required this.time,
     required this.mine,
+    this.senderName,
     this.state,
     this.onRetry,
   });
@@ -29,6 +30,9 @@ class MessageBubble extends StatelessWidget {
   final String text;
   final String time;
   final bool mine;
+
+  /// Shown above the text of someone else's message in a GROUP chat (null in direct chats and for my own).
+  final String? senderName;
   final DeliveryState? state;
   final VoidCallback? onRetry;
 
@@ -42,7 +46,7 @@ class MessageBubble extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.78 > 560 ? 560 : MediaQuery.sizeOf(context).width * 0.78),
         child: Semantics(
-          label: '${mine ? "You" : "Them"}: $text, $time${state == null ? "" : ", ${_label(state!)}"}',
+          label: '${mine ? "You" : (senderName ?? "Them")}: $text, $time${state == null ? "" : ", ${_label(state!)}"}',
           excludeSemantics: true,
           child: Card(
             color: bg,
@@ -50,7 +54,17 @@ class MessageBubble extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
               child: Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                Align(alignment: Alignment.centerLeft, child: Text(text, style: TextStyle(color: fg))),
+                if (senderName != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Text(senderName!,
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.primary, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                // SelectableText: desktop users expect to select and copy message text.
+                Align(alignment: Alignment.centerLeft, child: SelectableText(text, style: TextStyle(color: fg))),
                 const SizedBox(height: 2),
                 Row(mainAxisSize: MainAxisSize.min, children: [
                   Text(time, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: fg.withValues(alpha: 0.7))),

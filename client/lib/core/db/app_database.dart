@@ -27,6 +27,7 @@ class Members extends Table {
   TextColumn get displayName => text()();
   IntColumn get deliveredSeq => integer().withDefault(const Constant(0))();
   IntColumn get readSeq => integer().withDefault(const Constant(0))();
+  TextColumn get role => text().withDefault(const Constant('member'))(); // owner | admin | member (schema v2)
 
   @override
   Set<Column> get primaryKey => {conversationId, userId};
@@ -55,6 +56,9 @@ class ConversationSummary {
   const ConversationSummary({
     required this.id,
     required this.kind,
+    required this.groupTitle,
+    required this.memberCount,
+    required this.peerUserId,
     required this.peerName,
     required this.peerUsername,
     required this.lastBody,
@@ -65,6 +69,9 @@ class ConversationSummary {
 
   final String id;
   final String kind;
+  final String groupTitle;
+  final int memberCount;
+  final String? peerUserId; // the other person in a direct chat (drives the presence dot)
   final String? peerName;
   final String? peerUsername;
   final String? lastBody;
@@ -72,7 +79,8 @@ class ConversationSummary {
   final int myReadSeq;
   final int lastActivityMs;
 
-  String get title => peerName ?? 'Conversation';
+  bool get isGroup => kind == 'group';
+  String get title => isGroup ? (groupTitle.isEmpty ? 'Group' : groupTitle) : (peerName ?? 'Conversation');
   // My own messages advance my read mark on the server, so this is exactly "messages from others unseen".
   int get unread => lastSeq > myReadSeq ? lastSeq - myReadSeq : 0;
 }
@@ -83,13 +91,32 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'chat_cache'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  /// v1 -> v2: members gained `role`. The cache is disposable (the server is authoritative), but adding a
+  /// column is cheap and keeps unsent messages in the outbox intact.
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) await m.addColumn(members, members.role);
+        },
+      );
 
   // ------------------------------------------------------------------ conversations
   Future<ConversationRow?> conversation(String id) =>
       (select(conversations)..where((t) => t.id.equals(id))).getSingleOrNull();
 
+  Stream<ConversationRow?> watchConversation(String id) =>
+      (select(conversations)..where((t) => t.id.equals(id))).watchSingleOrNull();
+
   Future<List<ConversationRow>> allConversations() => select(conversations).get();
+
+  /// The user left, was removed, or the group no longer exists: forget it and everything in it.
+  Future<void> deleteConversation(String id) => transaction(() async {
+        await (delete(messages)..where((t) => t.conversationId.equals(id))).go();
+        await (delete(members)..where((t) => t.conversationId.equals(id))).go();
+        await (delete(conversations)..where((t) => t.id.equals(id))).go();
+      });
 
   /// Only the columns present in [c] are written on conflict, so syncCursor etc. survive a list refresh.
   Future<void> upsertConversation(ConversationsCompanion c) => into(conversations).insertOnConflictUpdate(c);
@@ -107,18 +134,23 @@ class AppDatabase extends _$AppDatabase {
       );
 
   Stream<List<ConversationSummary>> watchSummaries(String myUserId) => customSelect(
-        'SELECT c.id, c.kind, c.last_seq, c.last_activity_ms, '
+        'SELECT c.id, c.kind, c.title, c.last_seq, c.last_activity_ms, '
+        '(SELECT COUNT(*) FROM members m WHERE m.conversation_id = c.id) AS member_count, '
+        '(SELECT m.user_id FROM members m WHERE m.conversation_id = c.id AND m.user_id <> ? LIMIT 1) AS peer_id, '
         '(SELECT m.display_name FROM members m WHERE m.conversation_id = c.id AND m.user_id <> ? LIMIT 1) AS peer_name, '
         '(SELECT m.username FROM members m WHERE m.conversation_id = c.id AND m.user_id <> ? LIMIT 1) AS peer_username, '
         '(SELECT m.read_seq FROM members m WHERE m.conversation_id = c.id AND m.user_id = ?) AS my_read, '
         '(SELECT b.body FROM messages b WHERE b.conversation_id = c.id ORDER BY b.created_at_ms DESC LIMIT 1) AS last_body '
         'FROM conversations c ORDER BY c.last_activity_ms DESC',
-        variables: [Variable.withString(myUserId), Variable.withString(myUserId), Variable.withString(myUserId)],
+        variables: [for (var i = 0; i < 4; i++) Variable.withString(myUserId)],
         readsFrom: {conversations, members, messages},
       ).watch().map((rows) => rows
           .map((r) => ConversationSummary(
                 id: r.read<String>('id'),
                 kind: r.read<String>('kind'),
+                groupTitle: r.read<String>('title'),
+                memberCount: r.read<int>('member_count'),
+                peerUserId: r.readNullable<String>('peer_id'),
                 peerName: r.readNullable<String>('peer_name'),
                 peerUsername: r.readNullable<String>('peer_username'),
                 lastBody: r.readNullable<String>('last_body'),

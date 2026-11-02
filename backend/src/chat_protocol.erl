@@ -53,7 +53,43 @@ validate({create_direct, M}) ->
     _ -> ?INVALID(<<"invalid peer_user_id">>)
   end;
 validate({list_conversations, _}) -> {ok, {list_conversations, #{}}};
-validate({typing, _}) -> {error, 'ERROR_CODE_UNSUPPORTED_EVENT', <<"typing is not supported yet">>};
+validate({typing, M}) ->
+  case {chat_validate:uuid(f(conversation_id, M)), f(is_typing, M)} of
+    {{ok, C}, T} when is_boolean(T) -> {ok, {typing, #{conversation_id => C, is_typing => T}}};
+    _ -> ?INVALID(<<"invalid typing event">>)
+  end;
+validate({create_group, M}) ->
+  Max = chat_config:get(max_group_members),
+  case {chat_validate:group_title(f(title, M)), chat_validate:uuid_list(maps:get(member_user_ids, M, []), Max)} of
+    {{ok, T}, {ok, Ids}} -> {ok, {create_group, #{title => T, member_user_ids => Ids}}};
+    _ -> ?INVALID(<<"invalid create_group">>)
+  end;
+validate({add_members, M}) ->
+  Max = chat_config:get(max_group_members),
+  case {chat_validate:uuid(f(conversation_id, M)), chat_validate:uuid_list(maps:get(user_ids, M, []), Max)} of
+    {{ok, C}, {ok, [_ | _] = Ids}} -> {ok, {add_members, #{conversation_id => C, user_ids => Ids}}};
+    _ -> ?INVALID(<<"invalid add_members">>)
+  end;
+validate({remove_member, M}) ->
+  case {chat_validate:uuid(f(conversation_id, M)), chat_validate:uuid(f(user_id, M))} of
+    {{ok, C}, {ok, U}} -> {ok, {remove_member, #{conversation_id => C, user_id => U}}};
+    _ -> ?INVALID(<<"invalid remove_member">>)
+  end;
+validate({leave_conversation, M}) ->
+  case chat_validate:uuid(f(conversation_id, M)) of
+    {ok, C} -> {ok, {leave_conversation, #{conversation_id => C}}};
+    _ -> ?INVALID(<<"invalid leave_conversation">>)
+  end;
+validate({rename_group, M}) ->
+  case {chat_validate:uuid(f(conversation_id, M)), chat_validate:group_title(f(title, M))} of
+    {{ok, C}, {ok, T}} -> {ok, {rename_group, #{conversation_id => C, title => T}}};
+    _ -> ?INVALID(<<"invalid rename_group">>)
+  end;
+validate({get_presence, M}) ->
+  case chat_validate:uuid_list(maps:get(user_ids, M, []), 200) of
+    {ok, Ids} -> {ok, {get_presence, #{user_ids => Ids}}};
+    _ -> ?INVALID(<<"invalid get_presence">>)
+  end;
 validate({hello_ack, _}) -> {error, 'ERROR_CODE_UNSUPPORTED_EVENT', <<"unexpected event">>};
 validate(none) -> {error, 'ERROR_CODE_UNSUPPORTED_EVENT', <<"empty or unknown event">>};
 validate({_, _}) -> {error, 'ERROR_CODE_UNSUPPORTED_EVENT', <<"unknown event">>}.
@@ -88,14 +124,22 @@ message_to_pb(#{id := Id, conversation_id := C, seq := S, sender_id := Sd, clien
 conversation_to_pb(#{id := Id, kind := Kind, title := Title, last_seq := L, last_activity_ms := Act,
                      members := Members}) ->
   #{conversation_id => Id, kind => kind(Kind), title => Title, last_seq => L, last_activity_unix_ms => Act,
-    members => [#{user_id => U, username => Un, display_name => Dn, delivered_up_to_seq => D, read_up_to_seq => R}
-                || #{user_id := U, username := Un, display_name := Dn, delivered_seq := D, read_seq := R} <- Members]}.
+    members => [#{user_id => U, username => Un, display_name => Dn, delivered_up_to_seq => D, read_up_to_seq => R,
+                  role => role(Role)}
+                || #{user_id := U, username := Un, display_name := Dn, delivered_seq := D, read_seq := R,
+                     role := Role} <- Members]}.
+
+role(owner) -> 'MEMBER_ROLE_OWNER';
+role(admin) -> 'MEMBER_ROLE_ADMIN';
+role(member) -> 'MEMBER_ROLE_MEMBER'.
 
 kind(direct) -> 'CONVERSATION_KIND_DIRECT';
 kind(group) -> 'CONVERSATION_KIND_GROUP'.
 
 %% ------------------------------------------------------------------ domain error -> protocol error
 error_code(invalid) -> 'ERROR_CODE_INVALID_ARGUMENT';
+error_code(group_full) -> 'ERROR_CODE_INVALID_ARGUMENT';
+error_code(not_a_group) -> 'ERROR_CODE_INVALID_ARGUMENT';
 error_code(forbidden) -> 'ERROR_CODE_PERMISSION_DENIED';
 error_code(not_found) -> 'ERROR_CODE_NOT_FOUND';
 error_code(rate_limited) -> 'ERROR_CODE_RATE_LIMITED';

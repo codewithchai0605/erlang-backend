@@ -7,7 +7,9 @@
          create_device/3, create_session/1, find_session_by_access/1, find_session_by_refresh/1,
          rotate_session/6, revoke_session/1, revoke_all_sessions/1, create_or_get_direct/2,
          get_conversation/1, list_conversations/1, member_ids/1, insert_message/4,
-         messages_after/3, messages_before/3, advance_receipt/4]).
+         messages_after/3, messages_before/4, advance_receipt/4,
+         create_group/3, add_members/3, remove_member/2, rename_conversation/2, peer_ids/1,
+         get_last_seen/1, touch_last_seen/2]).
 
 -define(MSG_COLS, "id::text, conversation_id::text, seq, sender_id::text, client_message_id, body, "
                   "(extract(epoch from created_at) * 1000)::bigint").
@@ -130,7 +132,7 @@ direct_key(A, B) -> <<B/binary, ":", A/binary>>.
 -define(CONV_COLS, "c.id::text, c.kind, c.title, c.last_seq, "
                    "(extract(epoch from COALESCE(c.last_message_at, c.created_at)) * 1000)::bigint").
 -define(MEMBER_COLS, "m.conversation_id::text, u.id::text, u.username, u.display_name, "
-                     "m.last_delivered_seq, m.last_read_seq").
+                     "m.last_delivered_seq, m.last_read_seq, m.role, m.history_from_seq").
 
 get_conversation(Id) ->
   case chat_db:q("SELECT " ?CONV_COLS " FROM conversations c WHERE c.id = $1", [Id]) of
@@ -165,12 +167,17 @@ conv({Id, Kind, Title, LastSeq, ActivityMs}) ->
 kind(<<"direct">>) -> direct;
 kind(<<"group">>) -> group.
 
+role(<<"owner">>) -> owner;
+role(<<"admin">>) -> admin;
+role(<<"member">>) -> member.
+
 nullable(null) -> <<>>;
 nullable(V) -> V.
 
 attach(Convs, MemberRows) ->
-  ByConv = lists:foldl(fun({CId, UId, Un, Dn, D, R}, Acc) ->
-             M = #{user_id => UId, username => Un, display_name => Dn, delivered_seq => D, read_seq => R},
+  ByConv = lists:foldl(fun({CId, UId, Un, Dn, D, R, Role, From}, Acc) ->
+             M = #{user_id => UId, username => Un, display_name => Dn, delivered_seq => D, read_seq => R,
+                   role => role(Role), from_seq => From},
              maps:update_with(CId, fun(L) -> [M | L] end, [M], Acc)
            end, #{}, MemberRows),
   [C#{members => lists:sort(fun(A, B) -> maps:get(user_id, A) =< maps:get(user_id, B) end,
@@ -230,10 +237,10 @@ messages_after(ConvId, AfterSeq, Limit) ->
     {error, _} = E -> E
   end.
 
-messages_before(ConvId, BeforeSeq, Limit) ->
+messages_before(ConvId, BeforeSeq, MinSeq, Limit) ->
   Before = case BeforeSeq of 0 -> ?MAX_BIGINT; _ -> BeforeSeq end,
-  case chat_db:q("SELECT " ?MSG_COLS " FROM messages WHERE conversation_id = $1 AND seq < $2 "
-                 "ORDER BY seq DESC LIMIT $3", [ConvId, Before, Limit]) of
+  case chat_db:q("SELECT " ?MSG_COLS " FROM messages WHERE conversation_id = $1 AND seq < $2 AND seq > $3 "
+                 "ORDER BY seq DESC LIMIT $4", [ConvId, Before, MinSeq, Limit]) of
     {ok, _, Rows} -> {ok, lists:reverse([message(R) || R <- Rows])};   %% return ascending
     {error, _} = E -> E
   end.
@@ -259,3 +266,114 @@ advance_receipt(read, ConvId, UserId, Seq) ->
 receipt_result({ok, 1, _, [{D, R}]}) -> {ok, #{delivered_seq => D, read_seq => R}};
 receipt_result({ok, 0, _, _}) -> not_member;
 receipt_result({error, _} = E) -> E.
+
+%% ------------------------------------------------------------------ groups (Milestone 5)
+%% Membership changes lock the conversation row (SELECT ... FOR UPDATE). Message inserts bump last_seq on
+%% the same row, so a member's history_from_seq is read at a well-defined instant: every later message has
+%% a larger seq, every earlier one a smaller-or-equal seq.
+create_group(Owner, Title, Others) ->
+  All = lists:usort([Owner | Others]),
+  chat_db:transaction(fun(C) ->
+    {ok, _, [{Found}]} = chat_db:must(chat_db:equery(C,
+      "SELECT count(*) FROM users WHERE id = ANY($1::uuid[])", [All])),
+    case Found =:= length(All) of
+      false -> throw({abort, unknown_user});
+      true ->
+        {ok, 1, _, [{Id}]} = chat_db:must(chat_db:equery(C,
+          "INSERT INTO conversations (kind, title, created_by) VALUES ('group', $1, $2) RETURNING id::text",
+          [Title, Owner])),
+        chat_db:must(chat_db:equery(C,
+          "INSERT INTO conversation_members (conversation_id, user_id, role) "
+          "SELECT $1::uuid, u, CASE WHEN u = $2::uuid THEN 'owner' ELSE 'member' END FROM unnest($3::uuid[]) AS u",
+          [Id, Owner, All])),
+        {ok, Id}
+    end
+  end).
+
+add_members(ConvId, UserIds, MaxMembers) ->
+  Wanted = lists:usort(UserIds),
+  chat_db:transaction(fun(C) ->
+    LastSeq = case chat_db:must(chat_db:equery(C,
+        "SELECT kind, last_seq FROM conversations WHERE id = $1 FOR UPDATE", [ConvId])) of
+      {ok, _, []} -> throw({abort, not_found});
+      {ok, _, [{<<"direct">>, _}]} -> throw({abort, not_a_group});
+      {ok, _, [{<<"group">>, L}]} -> L
+    end,
+    {ok, _, [{Known}]} = chat_db:must(chat_db:equery(C,
+      "SELECT count(*) FROM users WHERE id = ANY($1::uuid[])", [Wanted])),
+    Known =:= length(Wanted) orelse throw({abort, unknown_user}),
+    {ok, _, Existing} = chat_db:must(chat_db:equery(C,
+      "SELECT user_id::text FROM conversation_members WHERE conversation_id = $1 AND user_id = ANY($2::uuid[])",
+      [ConvId, Wanted])),
+    New = Wanted -- [U || {U} <- Existing],
+    {ok, _, [{Current}]} = chat_db:must(chat_db:equery(C,
+      "SELECT count(*) FROM conversation_members WHERE conversation_id = $1", [ConvId])),
+    Current + length(New) =< MaxMembers orelse throw({abort, group_full}),
+    New =:= [] orelse chat_db:must(chat_db:equery(C,
+      "INSERT INTO conversation_members (conversation_id, user_id, role, history_from_seq, last_delivered_seq, last_read_seq) "
+      "SELECT $1::uuid, u, 'member', $3::bigint, $3::bigint, $3::bigint FROM unnest($2::uuid[]) AS u",
+      [ConvId, New, LastSeq])),
+    {ok, New}
+  end).
+
+%% Removes one member. If the owner goes, the longest-standing remaining member becomes owner; if nobody
+%% remains the conversation (and, by cascade, its messages) is deleted.
+remove_member(ConvId, UserId) ->
+  chat_db:transaction(fun(C) ->
+    case chat_db:must(chat_db:equery(C, "SELECT 1 FROM conversations WHERE id = $1 FOR UPDATE", [ConvId])) of
+      {ok, _, []} -> throw({abort, not_found});
+      {ok, _, [_]} -> ok
+    end,
+    Role = case chat_db:must(chat_db:equery(C,
+        "DELETE FROM conversation_members WHERE conversation_id = $1 AND user_id = $2 RETURNING role",
+        [ConvId, UserId])) of
+      {ok, 0, _, _} -> throw({abort, not_member});
+      {ok, 1, _, [{R}]} -> R
+    end,
+    case chat_db:must(chat_db:equery(C,
+        "SELECT user_id::text FROM conversation_members WHERE conversation_id = $1 "
+        "ORDER BY joined_at, user_id LIMIT 1", [ConvId])) of
+      {ok, _, []} ->
+        chat_db:must(chat_db:equery(C, "DELETE FROM conversations WHERE id = $1", [ConvId])),
+        {ok, #{conversation_deleted => true}};
+      {ok, _, [{Next}]} when Role =:= <<"owner">> ->
+        chat_db:must(chat_db:equery(C,
+          "UPDATE conversation_members SET role = 'owner' WHERE conversation_id = $1 AND user_id = $2", [ConvId, Next])),
+        {ok, #{conversation_deleted => false}};
+      {ok, _, [_]} ->
+        {ok, #{conversation_deleted => false}}
+    end
+  end).
+
+rename_conversation(ConvId, Title) ->
+  case chat_db:q("UPDATE conversations SET title = $2 WHERE id = $1 AND kind = 'group'", [ConvId, Title]) of
+    {ok, 1} -> ok;
+    {ok, 0} -> not_found;
+    {error, _} = E -> E
+  end.
+
+%% ------------------------------------------------------------------ presence support
+%% Everyone who shares at least one conversation with User (the audience for presence, and the only users
+%% whose presence User may query).
+peer_ids(UserId) ->
+  case chat_db:q("SELECT DISTINCT m2.user_id::text FROM conversation_members m1 "
+                 "JOIN conversation_members m2 ON m2.conversation_id = m1.conversation_id AND m2.user_id <> m1.user_id "
+                 "WHERE m1.user_id = $1", [UserId]) of
+    {ok, _, Rows} -> {ok, [U || {U} <- Rows]};
+    {error, _} = E -> E
+  end.
+
+get_last_seen([]) -> {ok, #{}};
+get_last_seen(Ids) ->
+  case chat_db:q("SELECT id::text, (extract(epoch from last_seen_at) * 1000)::bigint FROM users "
+                 "WHERE id = ANY($1::uuid[]) AND last_seen_at IS NOT NULL", [Ids]) of
+    {ok, _, Rows} -> {ok, maps:from_list(Rows)};
+    {error, _} = E -> E
+  end.
+
+touch_last_seen([], _Ms) -> ok;
+touch_last_seen(Ids, Ms) ->
+  case chat_db:q("UPDATE users SET last_seen_at = to_timestamp($2::bigint / 1000.0) WHERE id = ANY($1::uuid[])", [Ids, Ms]) of
+    {ok, _} -> ok;
+    {error, _} = E -> E
+  end.

@@ -1,4 +1,9 @@
--sname chat
+## Node name: full name on loopback. Works the same on a laptop, in Docker and on Render (a short name
+## `-sname` would depend on how the platform resolves the container's hostname).
+-name chat@127.0.0.1
+## Required. The Docker entrypoint generates a random one if CHAT_NODE_COOKIE is not set.
 -setcookie ${CHAT_NODE_COOKIE}
-# Keep distributed Erlang on loopback only. Never expose the distribution port publicly.
+## Keep distributed Erlang on loopback only. Never expose the distribution or epmd ports publicly.
 -kernel inet_dist_use_interface {127,0,0,1}
+## Containers log to stdout; a crash dump file would only fill the disk (and can contain secrets).
+-env ERL_CRASH_DUMP_SECONDS 0

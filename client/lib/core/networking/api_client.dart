@@ -79,6 +79,25 @@ class ApiClient {
     }
   }
 
+  /// PATCH /api/v1/me. Returns the profile as the server stored it (trimmed and validated).
+  Future<PublicUser> updateDisplayName(String displayName) async {
+    try {
+      final r = await _dio.patch<Map<String, dynamic>>('/api/v1/me', data: {'display_name': displayName});
+      return PublicUser.fromJson(r.data!['user'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.from(e);
+    }
+  }
+
+  /// POST /api/v1/auth/logout-all: revoke every session of this account on every device.
+  Future<void> logoutAll() async {
+    try {
+      await _dio.post<void>('/api/v1/auth/logout-all');
+    } on DioException catch (e) {
+      throw ApiException.from(e);
+    }
+  }
+
   Future<void> logout() async {
     try {
       await _dio.post<void>('/api/v1/auth/logout');

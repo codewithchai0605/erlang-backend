@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/settings/theme_mode.dart';
 import '../providers.dart';
 import 'router.dart';
 import 'theme.dart';
@@ -15,7 +16,7 @@ class ChatApp extends ConsumerWidget {
       title: 'Chat',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
     );
   }

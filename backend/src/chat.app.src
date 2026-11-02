@@ -1,8 +1,8 @@
 {application, chat, [
   {description, "Erlang/OTP chat backend"},
   {vsn, "0.1.0"},
-  {registered, [chat_sup, chat_rate_limit]},
+  {registered, [chat_sup, chat_rate_limit, chat_task_sup, chat_presence]},
   {mod, {chat_app, []}},
-  {applications, [kernel, stdlib, sasl, crypto, ranch, cowboy, epgsql, poolboy, bcrypt]},
+  {applications, [kernel, stdlib, sasl, crypto, public_key, ssl, ranch, cowboy, epgsql, poolboy, bcrypt]},
   {env, []}
 ]}.

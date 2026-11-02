@@ -1,18 +1,57 @@
-# Development PostgreSQL only. Native (non-Docker) setup is in docs/operations.md.
-# Bound to localhost on purpose: never expose the database port publicly.
+# Local stack: PostgreSQL + the chat backend, one command, no Erlang/rebar3/PostgreSQL install needed.
+#
+#   docker compose up --build           # build the backend image and start everything (first build: a few minutes)
+#   docker compose up -d postgres       # ONLY the database (e.g. when running the backend natively with rebar3)
+#   docker compose logs -f backend      # follow the server log
+#   docker compose down                 # stop (keeps the data)   |   docker compose down -v   # ...and wipe the data
+#
+# The backend is then at http://localhost:8080  (health: /healthz, readiness: /readyz).
+# Settings are read from your .env for ${...} interpolation only; the backend ALWAYS talks to the local
+# "postgres" service below, never to a remote database you may have configured in .env.
+name: chat
+
 services:
-  postgres:
-    image: postgres:16
+  # postgres:
+  #   image: postgres:16-alpine
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER:-chat}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chat_dev_password}
+  #     POSTGRES_DB: ${POSTGRES_DB:-chat_dev}
+  #   ports:
+  #     # Localhost only, on purpose: never expose a database port publicly.
+  #     - "127.0.0.1:5432:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 12
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: chat-backend:dev
     restart: unless-stopped
-    env_file: .env
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
+    environment:
+      CHAT_DB_HOST: postgres
+      CHAT_DB_PORT: "5432"
+      CHAT_DB_NAME: ${POSTGRES_DB:-chat_dev}
+      CHAT_DB_USER: ${POSTGRES_USER:-chat}
+      CHAT_DB_PASSWORD: ${POSTGRES_PASSWORD:-chat_dev_password}
+      CHAT_DB_SSL: disable
+      CHAT_RUN_MIGRATIONS: "true"
+      CHAT_NODE_COOKIE: ${CHAT_NODE_COOKIE:-}
+      CHAT_ALLOWED_ORIGINS: ${CHAT_ALLOWED_ORIGINS:-}
     ports:
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-volumes:
-  pgdata:
+      # All interfaces so a phone on your Wi-Fi can reach http://<your-pc-ip>:8080 (allow it in Windows Firewall).
+      # Use "127.0.0.1:8080:8080" to keep it private to this PC.
+      - "10000:10000"
+
+# volumes:
+#   pgdata:

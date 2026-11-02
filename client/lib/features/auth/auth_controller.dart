@@ -40,6 +40,20 @@ class AuthController extends Notifier<AuthState> {
     state = AuthState(AuthStatus.authenticated, s);
   }
 
+  /// Throws ApiException (e.g. invalid_argument) so the settings form can show the reason.
+  Future<void> updateDisplayName(String name) async {
+    final user = await ref.read(apiClientProvider).updateDisplayName(name);
+    final next = await ref.read(authRepositoryProvider).saveDisplayName(user.displayName);
+    if (next != null) state = AuthState(AuthStatus.authenticated, next);
+  }
+
+  /// Revokes all sessions server-side, then signs out here too.
+  Future<void> logoutAllDevices() async {
+    await ref.read(apiClientProvider).logoutAll();
+    await ref.read(authRepositoryProvider).clearLocal();
+    await _signedOut();
+  }
+
   Future<void> logout() async {
     await ref.read(apiClientProvider).logout();
     await ref.read(authRepositoryProvider).clearLocal();

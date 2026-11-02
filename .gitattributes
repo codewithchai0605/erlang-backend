@@ -1,0 +1,18 @@
+# Normalise line endings so a Windows checkout cannot break Linux containers or shell scripts.
+* text=auto
+*.sh text eol=lf
+Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+render.yaml text eol=lf
+*.erl text eol=lf
+*.hrl text eol=lf
+*.config text eol=lf
+*.src text eol=lf
+*.sql text eol=lf
+*.proto text eol=lf
+*.py text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary

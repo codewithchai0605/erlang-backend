@@ -5,11 +5,25 @@ import pathlib, re, sys
 root = pathlib.Path(__file__).resolve().parents[2]
 pairs = {")": "(", "]": "[", "}": "{"}
 def strip_erl(s):
-    s = re.sub(r"\$.", "X", s)                       # char literals like $" $(
-    s = re.sub(r"%.*", "", s)                        # comments (strings containing % are rare here)
-    s = re.sub(r'"(\\.|[^"\\])*"', '""', s)          # strings
-    s = re.sub(r"'(\\.|[^'\\])*'", "'a'", s)         # quoted atoms
-    return s
+    """Character scanner (not regexes): removes comments, strings, quoted atoms and $c literals while
+    respecting that '%' inside a string is not a comment and a quote inside a comment is not a string."""
+    out, i, n = [], 0, len(s)
+    while i < n:
+        c = s[i]
+        if c == "%":                                   # comment to end of line
+            while i < n and s[i] != "\n": i += 1
+        elif c == "$" and i + 1 < n:                   # character literal: $a  $\n  $"
+            i += 3 if s[i + 1] == "\\" else 2
+            out.append("X")
+        elif c in "\"'":                               # string or quoted atom, with backslash escapes
+            q = c; i += 1
+            while i < n and s[i] != q:
+                i += 2 if s[i] == "\\" else 1
+            i += 1
+            out.append(q + q)
+        else:
+            out.append(c); i += 1
+    return "".join(out)
 def strip_dart(s):
     s = re.sub(r"'''.*?'''|\"\"\".*?\"\"\"", "''", s, flags=re.S)
     s = re.sub(r"r?'(\\.|[^'\\\n])*'", "''", s)

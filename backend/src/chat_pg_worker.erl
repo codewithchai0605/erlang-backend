@@ -35,14 +35,35 @@ handle_info(_Info, S) -> {noreply, S}.
 terminate(_Reason, #{conn := C}) -> close(C).
 
 connect() ->
-  Opts = #{host => chat_config:get(db_host), port => chat_config:get(db_port),
-           username => chat_config:get(db_user), password => chat_config:get(db_password),
-           database => chat_config:get(db_name), timeout => 5000},
+  Host = chat_config:get(db_host),
+  Opts = maps:merge(#{host => Host, port => chat_config:get(db_port),
+                      username => chat_config:get(db_user), password => chat_config:get(db_password),
+                      database => chat_config:get(db_name), timeout => 5000},
+                    tls_opts(chat_config:get(db_ssl), Host)),
   case epgsql:connect(Opts) of
     {ok, C} -> {ok, C};
     {error, Reason} ->
       ?LOG_ERROR(#{event => db_connect_failed, reason => Reason}),  %% never log Opts: it holds the password
       {error, Reason}
+  end.
+
+%% TLS to PostgreSQL (CHAT_DB_SSL):
+%%   disable - plain TCP (local development, private networks)
+%%   require - encrypted, server certificate NOT verified (libpq sslmode=require): stops passive snooping only
+%%   verify  - encrypted AND the certificate chain and host name are checked against the OS trust store
+%% SNI is always sent for host names: managed providers such as Neon use it to route the connection.
+tls_opts(disable, _Host) -> #{};
+tls_opts(require, Host) -> #{ssl => required, ssl_opts => [{verify, verify_none}, {server_name_indication, sni(Host)}]};
+tls_opts(verify, Host) ->
+  #{ssl => required,
+    ssl_opts => [{verify, verify_peer}, {cacerts, public_key:cacerts_get()},
+                 {server_name_indication, sni(Host)},
+                 {customize_hostname_check, [{match_fun, public_key:pkix_verify_hostname_match_fun(https)}]}]}.
+
+sni(Host) ->
+  case inet:parse_address(Host) of
+    {ok, _} -> disable;    %% TLS forbids IP addresses in SNI
+    _ -> Host
   end.
 
 close(undefined) ->

@@ -28,21 +28,30 @@ send(UserId, #{conversation_id := Conv, client_message_id := CMid, text := Text}
   end.
 
 %% @doc Messages with seq > After, ascending. Returns {ok, Messages, HasMore}.
+%% A member never sees messages from before they joined (history_from_seq), see docs/decisions/0011.
 sync_after(User, Conv, After, Limit) ->
-  page(User, Conv, fun() -> chat_repo:messages_after(Conv, After, Limit + 1) end, Limit, fun(L) -> lists:sublist(L, Limit) end).
+  with_member(User, Conv, fun(From) ->
+    case chat_repo:messages_after(Conv, max(After, From), Limit + 1) of
+      {ok, Rows} -> {ok, lists:sublist(Rows, Limit), length(Rows) > Limit};
+      {error, _} -> {error, internal}
+    end
+  end).
 
 %% @doc Messages with seq < Before (0 = newest), returned ascending. Returns {ok, Messages, HasMore}.
-history_before(User, Conv, Before, Limit) ->
-  page(User, Conv, fun() -> chat_repo:messages_before(Conv, Before, Limit + 1) end, Limit,
-       fun(L) -> lists:nthtail(max(0, length(L) - Limit), L) end).
-
 %% We fetch Limit+1 rows: the extra row only tells us whether more exist, and is then dropped.
-page(User, Conv, Fetch, Limit, Trim) ->
+history_before(User, Conv, Before, Limit) ->
+  with_member(User, Conv, fun(From) ->
+    case chat_repo:messages_before(Conv, Before, From, Limit + 1) of
+      {ok, Rows} -> {ok, lists:nthtail(max(0, length(Rows) - Limit), Rows), length(Rows) > Limit};
+      {error, _} -> {error, internal}
+    end
+  end).
+
+%% Authorisation + the caller's history boundary in one membership lookup.
+with_member(User, Conv, Fun) ->
   case chat_conversations:require_member(User, Conv) of
-    {ok, _} ->
-      case Fetch() of
-        {ok, Rows} -> {ok, Trim(Rows), length(Rows) > Limit};
-        {error, _} -> {error, internal}
-      end;
+    {ok, #{members := Members}} ->
+      [From] = [F || #{user_id := U, from_seq := F} <- Members, U =:= User],
+      Fun(From);
     {error, _} = E -> E
   end.

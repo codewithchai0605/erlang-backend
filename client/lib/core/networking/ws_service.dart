@@ -41,6 +41,9 @@ abstract interface class ChatTransport {
   /// Sends [envelope] and completes with the matching response. Throws [ConnectionLost],
   /// [ProtocolFailure] or [TimeoutException].
   Future<pb.ServerEnvelope> request(pb.ClientEnvelope envelope);
+
+  /// Fire-and-forget (typing indicators): no request id, no response, silently dropped when offline.
+  void notify(pb.ClientEnvelope envelope);
 }
 
 /// Owns ONE WebSocket at a time and keeps reconnecting (exponential backoff + jitter) while started.
@@ -127,6 +130,16 @@ class WsService implements ChatTransport {
       _pending.remove(id);
       throw TimeoutException('request $id timed out');
     });
+  }
+
+  @override
+  void notify(pb.ClientEnvelope envelope) {
+    final t = _transport;
+    if (!isConnected || t == null) return;
+    envelope.requestId = '';
+    try {
+      t.sendBinary(envelope.writeToBuffer());
+    } catch (_) {/* best effort: an indicator that does not arrive is not worth an error */}
   }
 
   // ------------------------------------------------------------------ connection loop
